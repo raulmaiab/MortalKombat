@@ -10,10 +10,10 @@
 #define COR_ENERGIA     YELLOW
 #define COR_FUNDO_HUD   DARKGRAY
 
-static Texture2D bgMarcoZero;
-static Texture2D bgBoaViagem;
-static Texture2D bgJaqueira;
-static Texture2D bgMenu;
+Texture2D bgMarcoZero;
+Texture2D bgBoaViagem;
+Texture2D bgJaqueira;
+Texture2D bgMenu;
 
 
 /*
@@ -110,27 +110,38 @@ void desenharCenario(Texture2D background) {
 /*
  * Desenha o menu principal com as opções de início.
  */
-void desenharMenuPrincipal() {
-    ClearBackground(BLACK);
+void desenharMenuPrincipal(Texture2D background) {
+    DrawTexturePro(
+        background,
+        (Rectangle){ 0, 0, background.width, background.height },
+        (Rectangle){ 0, 0, LARGURA_TELA, ALTURA_TELA },
+        (Vector2){ 0, 0 }, 0.0f, WHITE
+    );
     int cx = LARGURA_TELA / 2;
-
     DrawText("BATALHA DO PASSINHO", cx - MeasureText("BATALHA DO PASSINHO", 48) / 2, 150, 48, RED);
     DrawText("Na Vibe do Brega Funk Recifense", cx - MeasureText("Na Vibe do Brega Funk Recifense", 22) / 2, 220, 22, YELLOW);
     DrawText("Pressione ENTER para jogar", cx - MeasureText("Pressione ENTER para jogar", 24) / 2, 380, 24, WHITE);
-    DrawText("ESC para sair",              cx - MeasureText("ESC para sair", 20) / 2,             430, 20, GRAY);
+    DrawText("ESC para sair", cx - MeasureText("ESC para sair", 20) / 2, 430, 20, GRAY);
 }
 
 /*
  * Desenha a tela de seleção de personagem para os dois jogadores.
  */
-void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2) {
+void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual) {
     const char *nomes[TOTAL_PERSONAGENS] = {
         "Joao Campos", "Magrao", "Kuki",
         "Grafite", "Clarisse Lispector", "Ariano Suassuna", "Tojal"
     };
+    const char *cenarios[] = { "Marco Zero", "Praia de Boa Viagem", "Parque da Jaqueira" };
 
     ClearBackground(BLACK);
     DrawText("ESCOLHA SEU PERSONAGEM", LARGURA_TELA / 2 - 200, 50, 32, YELLOW);
+
+    /* Cenário selecionado */
+    DrawText("Cenario:", 50, 120, 20, GRAY);
+    DrawText(cenarios[cenarioAtual], 140, 120, 20, ORANGE);
+    DrawText("J1: Q/E para mudar cenario", 50, 145, 16, GRAY);
+
     DrawText("J1: A/D para navegar | ENTER confirma", 50, ALTURA_TELA - 80, 18, RED);
     DrawText("J2: SETA ESQ/DIR para navegar | NUMPAD 1 confirma", 50, ALTURA_TELA - 50, 18, BLUE);
 

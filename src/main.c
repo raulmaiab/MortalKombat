@@ -6,7 +6,6 @@
 #include "ui.h"
 #include <string.h>
 
-/* Estados do jogo */
 typedef enum {
     ESTADO_MENU,
     ESTADO_SELECAO,
@@ -15,20 +14,34 @@ typedef enum {
     ESTADO_VITORIA
 } EstadoJogo;
 
-/* Tick: a cada quantos frames processa a fila de ataques */
+typedef enum {
+    CENARIO_MARCO_ZERO,
+    CENARIO_BOA_VIAGEM,
+    CENARIO_JAQUEIRA,
+    TOTAL_CENARIOS
+} IndiciceCenario;
+
 #define TICK_ATAQUE 8
+
+/* Texturas globais dos cenários — acessadas em ui.c via extern */
+extern Texture2D bgMarcoZero;
+extern Texture2D bgBoaViagem;
+extern Texture2D bgJaqueira;
+extern Texture2D bgMenu;
 
 int main(void) {
     InitWindow(LARGURA_TELA, ALTURA_TELA, TITULO_JANELA);
     SetTargetFPS(FPS_ALVO);
 
-    EstadoJogo estado   = ESTADO_MENU;
-    int        tickAtual = 0;
-    int        roundAtual = 1;
+    carregarCenarios();
 
-    /* Seleção de personagem */
-    int selecaoJ1 = JOAO_CAMPOS;
-    int selecaoJ2 = GRAFITE;
+    EstadoJogo    estado      = ESTADO_MENU;
+    IndiciceCenario cenarioAtual = CENARIO_MARCO_ZERO;
+    int tickAtual  = 0;
+    int roundAtual = 1;
+
+    int selecaoJ1  = JOAO_CAMPOS;
+    int selecaoJ2  = GRAFITE;
     int confirmouJ1 = 0, confirmouJ2 = 0;
 
     Jogador jogador1, jogador2;
@@ -38,7 +51,6 @@ int main(void) {
     while (!WindowShouldClose()) {
         tickAtual++;
 
-        /* ===== ATUALIZAÇÃO DE LÓGICA ===== */
         switch (estado) {
 
             case ESTADO_MENU:
@@ -46,15 +58,17 @@ int main(void) {
                 break;
 
             case ESTADO_SELECAO:
-                /* Navegação J1 */
                 if (IsKeyPressed(KEY_D) && selecaoJ1 < TOTAL_PERSONAGENS - 1) selecaoJ1++;
                 if (IsKeyPressed(KEY_A) && selecaoJ1 > 0)                     selecaoJ1--;
                 if (IsKeyPressed(KEY_ENTER)) confirmouJ1 = 1;
 
-                /* Navegação J2 */
                 if (IsKeyPressed(KEY_RIGHT) && selecaoJ2 < TOTAL_PERSONAGENS - 1) selecaoJ2++;
                 if (IsKeyPressed(KEY_LEFT)  && selecaoJ2 > 0)                     selecaoJ2--;
                 if (IsKeyPressed(KEY_KP_1)) confirmouJ2 = 1;
+
+                /* Escolha de cenário — J1 usa W/S para selecionar */
+                if (IsKeyPressed(KEY_E) && cenarioAtual < TOTAL_CENARIOS - 1) cenarioAtual++;
+                if (IsKeyPressed(KEY_Q) && cenarioAtual > 0)                  cenarioAtual--;
 
                 if (confirmouJ1 && confirmouJ2) {
                     inicializarJogador(&jogador1, selecaoJ1, 200, ALTURA_TELA / 2, 1);
@@ -62,49 +76,44 @@ int main(void) {
                     memset(statsRound, 0, sizeof(statsRound));
                     strncpy(statsRound[0].nomePersonagem, jogador1.personagem.nome, MAX_NOME);
                     strncpy(statsRound[1].nomePersonagem, jogador2.personagem.nome, MAX_NOME);
-                    roundAtual   = 1;
-                    confirmouJ1  = 0;
-                    confirmouJ2  = 0;
-                    estado       = ESTADO_COMBATE;
+                    roundAtual  = 1;
+                    confirmouJ1 = 0;
+                    confirmouJ2 = 0;
+                    estado      = ESTADO_COMBATE;
                 }
                 break;
 
             case ESTADO_COMBATE:
-                /* ---- Captura de inputs — Jogador 1 ---- */
+                /* Inputs J1 */
                 if (IsKeyPressed(KEY_G)) enfileirarPassinho(&jogador1.fila, ATAQUE_LEVE);
                 if (IsKeyPressed(KEY_H)) enfileirarPassinho(&jogador1.fila, ATAQUE_MEDIO);
                 if (IsKeyPressed(KEY_Y)) enfileirarPassinho(&jogador1.fila, ATAQUE_ESPECIAL);
                 if (IsKeyPressed(KEY_S)) enfileirarPassinho(&jogador1.fila, ESQUIVA);
 
-                /* Movimentação J1 */
-                if (IsKeyDown(KEY_A) && jogador1.posX > 0)                  jogador1.posX -= 4;
-                if (IsKeyDown(KEY_D) && jogador1.posX < LARGURA_TELA - 60)  jogador1.posX += 4;
-                if (IsKeyDown(KEY_W) && jogador1.posY > ALTURA_TELA / 2)    jogador1.posY -= 4;
+                if (IsKeyDown(KEY_A) && jogador1.posX > 0)                 jogador1.posX -= 4;
+                if (IsKeyDown(KEY_D) && jogador1.posX < LARGURA_TELA - 60) jogador1.posX += 4;
+                if (IsKeyDown(KEY_W) && jogador1.posY > ALTURA_TELA / 2)   jogador1.posY -= 4;
 
-                /* ---- Captura de inputs — Jogador 2 ---- */
+                /* Inputs J2 */
                 if (IsKeyPressed(KEY_KP_1)) enfileirarPassinho(&jogador2.fila, ATAQUE_LEVE);
                 if (IsKeyPressed(KEY_KP_2)) enfileirarPassinho(&jogador2.fila, ATAQUE_MEDIO);
                 if (IsKeyPressed(KEY_KP_3)) enfileirarPassinho(&jogador2.fila, ATAQUE_ESPECIAL);
                 if (IsKeyPressed(KEY_DOWN)) enfileirarPassinho(&jogador2.fila, ESQUIVA);
 
-                /* Movimentação J2 */
-                if (IsKeyDown(KEY_LEFT)  && jogador2.posX > 0)                  jogador2.posX -= 4;
-                if (IsKeyDown(KEY_RIGHT) && jogador2.posX < LARGURA_TELA - 60)  jogador2.posX += 4;
-                if (IsKeyDown(KEY_UP)    && jogador2.posY > ALTURA_TELA / 2)    jogador2.posY -= 4;
+                if (IsKeyDown(KEY_LEFT)  && jogador2.posX > 0)                 jogador2.posX -= 4;
+                if (IsKeyDown(KEY_RIGHT) && jogador2.posX < LARGURA_TELA - 60) jogador2.posX += 4;
+                if (IsKeyDown(KEY_UP)    && jogador2.posY > ALTURA_TELA / 2)   jogador2.posY -= 4;
 
-                /* ---- Processamento da fila a cada tick ---- */
+                /* Processamento da fila */
                 if (tickAtual % TICK_ATAQUE == 0) {
-                    /* Jogador 1 ataca */
                     if (!filaVazia(&jogador1.fila)) {
                         TipoPassinho p = desenfileirarPassinho(&jogador1.fila);
                         if (p != ESQUIVA)
                             processarPassinho(p, &jogador1, &jogador2, statsRound);
                     }
-                    /* Jogador 2 ataca */
                     if (!filaVazia(&jogador2.fila)) {
                         TipoPassinho p = desenfileirarPassinho(&jogador2.fila);
                         if (p != ESQUIVA) {
-                            /* Inverte stats para jogador2 ser o [0] */
                             Estatistica statsInvertido[2] = { statsRound[1], statsRound[0] };
                             processarPassinho(p, &jogador2, &jogador1, statsInvertido);
                             statsRound[0] = statsInvertido[1];
@@ -113,7 +122,6 @@ int main(void) {
                     }
                 }
 
-                /* ---- Verifica fim do round ---- */
                 int resultado = verificarVencedor(&jogador1, &jogador2);
                 if (resultado != 0) {
                     vencedorRound = (resultado == 1) ? &jogador1 : &jogador2;
@@ -125,11 +133,9 @@ int main(void) {
 
             case ESTADO_RESULTADO_ROUND:
                 if (IsKeyPressed(KEY_ENTER)) {
-                    /* Verifica se alguém ganhou 2 rounds */
                     if (jogador1.roundsVencidos >= 2 || jogador2.roundsVencidos >= 2) {
                         estado = ESTADO_VITORIA;
                     } else {
-                        /* Próximo round */
                         roundAtual++;
                         resetarJogador(&jogador1);
                         resetarJogador(&jogador2);
@@ -143,9 +149,10 @@ int main(void) {
 
             case ESTADO_VITORIA:
                 if (IsKeyPressed(KEY_ENTER)) {
-                    selecaoJ1 = JOAO_CAMPOS;
-                    selecaoJ2 = GRAFITE;
-                    estado    = ESTADO_SELECAO;
+                    selecaoJ1   = JOAO_CAMPOS;
+                    selecaoJ2   = GRAFITE;
+                    cenarioAtual = CENARIO_MARCO_ZERO;
+                    estado      = ESTADO_SELECAO;
                 }
                 break;
         }
@@ -154,15 +161,23 @@ int main(void) {
         BeginDrawing();
         ClearBackground(BLACK);
 
+        /* Seleciona o background do cenário atual */
+        Texture2D bgAtual;
+        switch (cenarioAtual) {
+            case CENARIO_BOA_VIAGEM: bgAtual = bgBoaViagem; break;
+            case CENARIO_JAQUEIRA:   bgAtual = bgJaqueira;  break;
+            default:                 bgAtual = bgMarcoZero; break;
+        }
+
         switch (estado) {
             case ESTADO_MENU:
-                desenharMenuPrincipal();
+                desenharMenuPrincipal(bgMenu);
                 break;
             case ESTADO_SELECAO:
-                desenharSelecaoPersonagem(selecaoJ1, selecaoJ2);
+                desenharSelecaoPersonagem(selecaoJ1, selecaoJ2, cenarioAtual);
                 break;
             case ESTADO_COMBATE:
-                desenharCenario();
+                desenharCenario(bgAtual);
                 desenharPersonagens(&jogador1, &jogador2);
                 desenharHUD(&jogador1, &jogador2, roundAtual);
                 break;
@@ -177,6 +192,7 @@ int main(void) {
         EndDrawing();
     }
 
+    descarregarCenarios();
     CloseWindow();
     return 0;
 }
