@@ -10,9 +10,32 @@
 #define COR_ENERGIA     YELLOW
 #define COR_FUNDO_HUD   DARKGRAY
 
+static Texture2D bgMarcoZero;
+static Texture2D bgBoaViagem;
+static Texture2D bgJaqueira;
+static Texture2D bgMenu;
+
+
 /*
  * Desenha o HUD completo: barras de HP, energia, placar de rounds e round atual.
  */
+
+void carregarCenarios() {
+    bgMarcoZero = LoadTexture("assets/backgrounds/marco_zero.png");
+    bgBoaViagem = LoadTexture("assets/backgrounds/boa_viagem.png");
+    bgJaqueira  = LoadTexture("assets/backgrounds/jaqueira.png");
+    bgMenu      = LoadTexture("assets/backgrounds/menu.png");
+}
+
+/* Chama isso no fechamento do jogo, antes do CloseWindow() */
+void descarregarCenarios() {
+    UnloadTexture(bgMarcoZero);
+    UnloadTexture(bgBoaViagem);
+    UnloadTexture(bgJaqueira);
+    UnloadTexture(bgMenu);
+}
+
+
 void desenharHUD(Jogador *jogador1, Jogador *jogador2, int roundAtual) {
     int larguraBarra = 400;
     int alturaBarra  = 25;
@@ -73,12 +96,15 @@ void desenharPersonagens(Jogador *jogador1, Jogador *jogador2) {
  * Desenha o cenário de fundo.
  * TODO: carregar imagem de fundo (Marco Zero, Boa Viagem, etc.)
  */
-void desenharCenario() {
-    /* Céu */
-    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA / 2, (Color){30, 100, 200, 255});
-    /* Chão */
-    DrawRectangle(0, ALTURA_TELA / 2, LARGURA_TELA, ALTURA_TELA / 2, (Color){80, 50, 20, 255});
-    DrawText("Marco Zero - Recife", 20, ALTURA_TELA - 30, 16, LIGHTGRAY);
+void desenharCenario(Texture2D background) {
+    DrawTexturePro(
+        background,
+        (Rectangle){ 0, 0, background.width, background.height },
+        (Rectangle){ 0, 0, LARGURA_TELA, ALTURA_TELA },
+        (Vector2){ 0, 0 },
+        0.0f,
+        WHITE
+    );
 }
 
 /*
