@@ -1,0 +1,18 @@
+CC = gcc
+CFLAGS = -Wall -Iinclude
+LIBS = -lraylib -lm -framework OpenGL -framework Cocoa -framework IOKit
+
+SRC = $(wildcard src/*.c)
+OBJ = $(SRC:.c=.o)
+TARGET = batalha_passinho
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	$(CC) $(OBJ) -o $(TARGET) $(LIBS)
+
+src/%.o: src/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f src/*.o $(TARGET)
