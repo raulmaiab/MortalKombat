@@ -1,6 +1,8 @@
 #include "ui.h"
+#include "combate.h"
 #include "ordenacao.h"
 #include "raylib.h"
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -14,6 +16,12 @@ Texture2D bgMarcoZero;
 Texture2D bgBoaViagem;
 Texture2D bgJaqueira;
 Texture2D bgMenu;
+
+static float distanciaJogadores(Jogador *jogador1, Jogador *jogador2) {
+    float dx = jogador1->posX - jogador2->posX;
+    float dy = jogador1->posY - jogador2->posY;
+    return sqrtf(dx * dx + dy * dy);
+}
 
 
 /*
@@ -59,11 +67,15 @@ void desenharHUD(Jogador *jogador1, Jogador *jogador2, int roundAtual) {
     DrawRectangle(margem, margem + alturaBarra + 30, larguraEnergia, 15, DARKGRAY);
     int energiaJ1 = (jogador1->energia * larguraEnergia) / MAX_ENERGIA;
     DrawRectangle(margem, margem + alturaBarra + 30, energiaJ1, 15, COR_ENERGIA);
+    DrawText(TextFormat("Energia: %d/%d", jogador1->energia, MAX_ENERGIA),
+             margem, margem + alturaBarra + 48, 16, WHITE);
 
     /* -- Energia Jogador 2 -- */
     DrawRectangle(xJ2 + larguraBarra - larguraEnergia, margem + alturaBarra + 30, larguraEnergia, 15, DARKGRAY);
     int energiaJ2 = (jogador2->energia * larguraEnergia) / MAX_ENERGIA;
     DrawRectangle(xJ2 + larguraBarra - energiaJ2, margem + alturaBarra + 30, energiaJ2, 15, COR_ENERGIA);
+    DrawText(TextFormat("Energia: %d/%d", jogador2->energia, MAX_ENERGIA),
+             xJ2 + larguraBarra - larguraEnergia, margem + alturaBarra + 48, 16, WHITE);
 
     /* -- Round atual no centro -- */
     char textoRound[20];
@@ -76,6 +88,18 @@ void desenharHUD(Jogador *jogador1, Jogador *jogador2, int roundAtual) {
     sprintf(placar, "%d  x  %d", jogador1->roundsVencidos, jogador2->roundsVencidos);
     int larguraPlacar = MeasureText(placar, 24);
     DrawText(placar, LARGURA_TELA / 2 - larguraPlacar / 2, margem + 35, 24, YELLOW);
+
+    float distancia = distanciaJogadores(jogador1, jogador2);
+    const char *alcance = distancia <= DISTANCIA_MAXIMA_ATAQUE ? "NO ALCANCE" : "LONGE";
+    Color corAlcance = distancia <= DISTANCIA_MAXIMA_ATAQUE ? GREEN : RED;
+    const char *textoAlcance = TextFormat("Distancia: %.0f px | %s", distancia, alcance);
+    DrawText(textoAlcance, LARGURA_TELA / 2 - MeasureText(textoAlcance, 18) / 2, margem + 68, 18, corAlcance);
+
+    DrawText(TextFormat("Fila: %d | Stun: %d", jogador1->fila.tamanho, jogador1->stunTicks),
+             margem, margem + alturaBarra + 68, 16, jogador1->stunTicks > 0 ? ORANGE : LIGHTGRAY);
+    DrawText(TextFormat("Fila: %d | Stun: %d", jogador2->fila.tamanho, jogador2->stunTicks),
+             xJ2 + larguraBarra - larguraEnergia, margem + alturaBarra + 68, 16,
+             jogador2->stunTicks > 0 ? ORANGE : LIGHTGRAY);
 }
 
 /*
@@ -86,10 +110,16 @@ void desenharPersonagens(Jogador *jogador1, Jogador *jogador2) {
     /* Jogador 1 — retângulo vermelho por enquanto */
     DrawRectangle((int)jogador1->posX, (int)jogador1->posY, 60, 100, RED);
     DrawText("J1", (int)jogador1->posX + 15, (int)jogador1->posY + 40, 20, WHITE);
+    if (jogador1->stunTicks > 0) {
+        DrawText("STUN", (int)jogador1->posX - 2, (int)jogador1->posY - 24, 20, ORANGE);
+    }
 
     /* Jogador 2 — retângulo azul por enquanto */
     DrawRectangle((int)jogador2->posX, (int)jogador2->posY, 60, 100, BLUE);
     DrawText("J2", (int)jogador2->posX + 15, (int)jogador2->posY + 40, 20, WHITE);
+    if (jogador2->stunTicks > 0) {
+        DrawText("STUN", (int)jogador2->posX - 2, (int)jogador2->posY - 24, 20, ORANGE);
+    }
 }
 
 /*
@@ -160,8 +190,8 @@ void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual) {
 void desenharResultadoRound(Jogador *vencedor, Estatistica *stats, int totalStats) {
     ClearBackground(BLACK);
 
-    char titulo[60];
-    sprintf(titulo, "%s VENCEU O ROUND!", vencedor->personagem.nome);
+    char titulo[80];
+    snprintf(titulo, sizeof(titulo), "%s VENCEU O ROUND!", vencedor->personagem.nome);
     DrawText(titulo, LARGURA_TELA / 2 - MeasureText(titulo, 30) / 2, 100, 30, YELLOW);
     DrawText("ESTATISTICAS", LARGURA_TELA / 2 - 80, 180, 26, WHITE);
 

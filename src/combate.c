@@ -1,33 +1,87 @@
 #include "combate.h"
+#include <math.h>
 #include <string.h>
+
+const int energiaConsumida[3] = { 10, 25, 80 };
+
+static float calcularDistancia(const Jogador *a, const Jogador *b) {
+    float dx = a->posX - b->posX;
+    float dy = a->posY - b->posY;
+    return sqrtf(dx * dx + dy * dy);
+}
+
+static void aplicarStun(Jogador *alvo, int tickAtual) {
+    alvo->stunTicks       = STUN_TICKS_PADRAO;
+    limparFila(&alvo->fila);
+    alvo->ultimoGolpeTick = tickAtual;
+    alvo->golpesSeguidos  = 0;
+}
 
 /*
  * Processa um passinho atacante contra o alvo.
- * Verifica primeiro se o alvo tem ESQUIVA no topo da fila.
- * Se sim, bloqueia o dano e consome a esquiva.
- * Se não, aplica dano e atualiza energia do atacante.
+ * Verifica distância, energia e stun antes de aplicar dano.
  */
-void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, Estatistica *stats) {
-    /* Verifica se o alvo está esquivando */
-    if (!filaVazia(&alvo->fila) && peekFila(&alvo->fila) == ESQUIVA) {
-        desenfileirarPassinho(&alvo->fila); /* consome a esquiva */
-        stats[1].esquivasRealizadas++;      /* stats[1] = alvo */
+void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, Estatistica *stats, int tickAtual) {
+    if (atacante->stunTicks > 0) return;
+
+    int custo = 0;
+    int dano = 0;
+
+    switch (passinho) {
+        case ATAQUE_LEVE:
+            custo = energiaConsumida[0];
+            dano = atacante->personagem.danoLeve;
+            break;
+        case ATAQUE_MEDIO:
+            custo = energiaConsumida[1];
+            dano = atacante->personagem.danomedio;
+            break;
+        case ATAQUE_ESPECIAL:
+            custo = energiaConsumida[2];
+            dano = atacante->personagem.danoEspecial;
+            break;
+        default:
+            break;
+    }
+
+    if ((passinho == ATAQUE_LEVE || passinho == ATAQUE_MEDIO || passinho == ATAQUE_ESPECIAL) && atacante->energia < custo) {
         return;
     }
 
-    int dano = 0;
-    switch (passinho) {
-        case ATAQUE_LEVE:    dano = atacante->personagem.danoLeve;    break;
-        case ATAQUE_MEDIO:   dano = atacante->personagem.danomedio;   break;
-        case ATAQUE_ESPECIAL: dano = atacante->personagem.danoEspecial; break;
-        default: break;
+    if (calcularDistancia(atacante, alvo) > DISTANCIA_MAXIMA_ATAQUE) {
+        return;
+    }
+
+    if (passinho == ATAQUE_LEVE || passinho == ATAQUE_MEDIO || passinho == ATAQUE_ESPECIAL) {
+        atacante->energia -= custo;
+        if (atacante->energia < 0) atacante->energia = 0;
+    }
+
+    if (!filaVazia(&alvo->fila) && peekFila(&alvo->fila) == ESQUIVA) {
+        desenfileirarPassinho(&alvo->fila);
+        stats[1].esquivasRealizadas++;
+        return;
     }
 
     alvo->hp -= dano;
     if (alvo->hp < 0) alvo->hp = 0;
 
     atualizarEnergia(atacante, dano);
-    stats[0].danoTotal += dano; /* stats[0] = atacante */
+    stats[0].danoTotal += dano;
+
+    if (tickAtual - alvo->ultimoGolpeTick < HITSTUN_WINDOW_TICKS) {
+        alvo->golpesSeguidos++;
+    } else {
+        alvo->golpesSeguidos = 1;
+    }
+
+    if (alvo->golpesSeguidos >= 3) {
+        aplicarStun(alvo, tickAtual);
+    } else {
+        alvo->stunTicks       = STUN_TICKS_PADRAO;
+        limparFila(&alvo->fila);
+        alvo->ultimoGolpeTick = tickAtual;
+    }
 }
 
 /*

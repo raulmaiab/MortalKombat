@@ -84,38 +84,44 @@ int main(void) {
                 break;
 
             case ESTADO_COMBATE:
-                /* Inputs J1 */
-                if (IsKeyPressed(KEY_G)) enfileirarPassinho(&jogador1.fila, ATAQUE_LEVE);
-                if (IsKeyPressed(KEY_H)) enfileirarPassinho(&jogador1.fila, ATAQUE_MEDIO);
-                if (IsKeyPressed(KEY_Y)) enfileirarPassinho(&jogador1.fila, ATAQUE_ESPECIAL);
-                if (IsKeyPressed(KEY_S)) enfileirarPassinho(&jogador1.fila, ESQUIVA);
+                /* Stun decrementa no loop do combate */
+                if (jogador1.stunTicks > 0) jogador1.stunTicks--;
+                if (jogador2.stunTicks > 0) jogador2.stunTicks--;
 
-                if (IsKeyDown(KEY_A) && jogador1.posX > 0)                 jogador1.posX -= 4;
-                if (IsKeyDown(KEY_D) && jogador1.posX < LARGURA_TELA - 60) jogador1.posX += 4;
-                if (IsKeyDown(KEY_W) && jogador1.posY > ALTURA_TELA / 2)   jogador1.posY -= 4;
+                if (jogador1.stunTicks == 0) {
+                    if (IsKeyPressed(KEY_G)) enfileirarPassinho(&jogador1.fila, ATAQUE_LEVE);
+                    if (IsKeyPressed(KEY_H)) enfileirarPassinho(&jogador1.fila, ATAQUE_MEDIO);
+                    if (IsKeyPressed(KEY_Y)) enfileirarPassinho(&jogador1.fila, ATAQUE_ESPECIAL);
+                    if (IsKeyPressed(KEY_S)) enfileirarPassinho(&jogador1.fila, ESQUIVA);
 
-                /* Inputs J2 */
-                if (IsKeyPressed(KEY_KP_1)) enfileirarPassinho(&jogador2.fila, ATAQUE_LEVE);
-                if (IsKeyPressed(KEY_KP_2)) enfileirarPassinho(&jogador2.fila, ATAQUE_MEDIO);
-                if (IsKeyPressed(KEY_KP_3)) enfileirarPassinho(&jogador2.fila, ATAQUE_ESPECIAL);
-                if (IsKeyPressed(KEY_DOWN)) enfileirarPassinho(&jogador2.fila, ESQUIVA);
+                    if (IsKeyDown(KEY_A) && jogador1.posX > 0)                 jogador1.posX -= 4;
+                    if (IsKeyDown(KEY_D) && jogador1.posX < LARGURA_TELA - 60) jogador1.posX += 4;
+                    if (IsKeyDown(KEY_W) && jogador1.posY > ALTURA_TELA / 2)   jogador1.posY -= 4;
+                }
 
-                if (IsKeyDown(KEY_LEFT)  && jogador2.posX > 0)                 jogador2.posX -= 4;
-                if (IsKeyDown(KEY_RIGHT) && jogador2.posX < LARGURA_TELA - 60) jogador2.posX += 4;
-                if (IsKeyDown(KEY_UP)    && jogador2.posY > ALTURA_TELA / 2)   jogador2.posY -= 4;
+                if (jogador2.stunTicks == 0) {
+                    if (IsKeyPressed(KEY_KP_1)) enfileirarPassinho(&jogador2.fila, ATAQUE_LEVE);
+                    if (IsKeyPressed(KEY_KP_2)) enfileirarPassinho(&jogador2.fila, ATAQUE_MEDIO);
+                    if (IsKeyPressed(KEY_KP_3)) enfileirarPassinho(&jogador2.fila, ATAQUE_ESPECIAL);
+                    if (IsKeyPressed(KEY_DOWN)) enfileirarPassinho(&jogador2.fila, ESQUIVA);
+
+                    if (IsKeyDown(KEY_LEFT)  && jogador2.posX > 0)                 jogador2.posX -= 4;
+                    if (IsKeyDown(KEY_RIGHT) && jogador2.posX < LARGURA_TELA - 60) jogador2.posX += 4;
+                    if (IsKeyDown(KEY_UP)    && jogador2.posY > ALTURA_TELA / 2)   jogador2.posY -= 4;
+                }
 
                 /* Processamento da fila */
                 if (tickAtual % TICK_ATAQUE == 0) {
                     if (!filaVazia(&jogador1.fila)) {
                         TipoPassinho p = desenfileirarPassinho(&jogador1.fila);
                         if (p != ESQUIVA)
-                            processarPassinho(p, &jogador1, &jogador2, statsRound);
+                            processarPassinho(p, &jogador1, &jogador2, statsRound, tickAtual);
                     }
                     if (!filaVazia(&jogador2.fila)) {
                         TipoPassinho p = desenfileirarPassinho(&jogador2.fila);
                         if (p != ESQUIVA) {
                             Estatistica statsInvertido[2] = { statsRound[1], statsRound[0] };
-                            processarPassinho(p, &jogador2, &jogador1, statsInvertido);
+                            processarPassinho(p, &jogador2, &jogador1, statsInvertido, tickAtual);
                             statsRound[0] = statsInvertido[1];
                             statsRound[1] = statsInvertido[0];
                         }

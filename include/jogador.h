@@ -23,6 +23,9 @@ typedef struct {
     FilaPassinhos fila;         /* fila de inputs — ED central */
     int           hp;
     int           energia;
+    int           stunTicks;         /* trava movimento e limpa fila ao levar dano */
+    int           ultimoGolpeTick;   /* último tick em que o jogador levou dano */
+    int           golpesSeguidos;    /* contador de hits rápidos para hitstun */
     int           roundsVencidos;
     float         posX;         /* posição na tela (Raylib) */
     float         posY;
