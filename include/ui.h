@@ -1,6 +1,7 @@
 #ifndef UI_H
 #define UI_H
 
+#include "fighter_assets.h"
 #include "jogador.h"
 #include "raylib.h"
 
@@ -14,6 +15,7 @@ extern Texture2D bgMarcoZero;
 extern Texture2D bgBoaViagem;
 extern Texture2D bgJaqueira;
 extern Texture2D bgMenu;
+extern Texture2D bgPlayerSelect;
 
 /* ---- Funções de UI (Raylib) ---- */
 void carregarCenarios();

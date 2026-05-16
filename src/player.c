@@ -1,5 +1,9 @@
 #include "player.h"
 #include "fila.h"
+#include <stddef.h>
+
+#define SPRITE_ALTURA 504
+#define SPRITE_LARGURA 504
 
 static void limitarPosicaoX(Jogador *jogador)
 {
@@ -85,26 +89,6 @@ static Color corDoEstado(const Jogador *jogador, Color corBase)
     }
 }
 
-static const char *textoDoEstado(PlayerState state)
-{
-    switch (state)
-    {
-    case WALK:
-        return "WALK";
-    case JUMP:
-        return "JUMP";
-    case DEFENSE:
-        return "DEFENSE";
-    case ATTACK:
-        return "ATTACK";
-    case STUN:
-        return "STUN";
-    case IDLE:
-    default:
-        return "IDLE";
-    }
-}
-
 void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
 {
     int moveu = 0;
@@ -165,17 +149,47 @@ void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
     atualizarEstado(jogador, moveu);
 }
 
-void renderPlayer(const Jogador *jogador, Color corBase, const char *rotulo)
+static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *anim)
+{
+    int frameAtual;
+    Texture2D textura;
+    Rectangle origem;
+    Rectangle destino;
+
+    if (anim == NULL || anim->totalFrames == 0)
+        return;
+
+    frameAtual = (int)(GetTime() / anim->frameDuration) % anim->totalFrames;
+    textura = anim->frames[frameAtual];
+    origem = anim->sources[frameAtual];
+    destino = (Rectangle){
+        jogador->posX + (LARGURA_PERSONAGEM / 2.0f) - (SPRITE_LARGURA / 2.0f),
+        jogador->posY + ALTURA_PERSONAGEM - SPRITE_ALTURA,
+        SPRITE_LARGURA,
+        SPRITE_ALTURA
+    };
+
+    if (!jogador->olhandoDireita)
+    {
+        origem.width *= -1;
+    }
+
+    DrawTexturePro(textura, origem, destino, (Vector2){0, 0}, 0.0f, WHITE);
+}
+
+void renderPlayer(const Jogador *jogador, const FighterAssets *assets, Color corBase, const char *rotulo)
 {
     int x = (int)jogador->posX;
     int y = (int)jogador->posY;
     Color cor = corDoEstado(jogador, corBase);
-    const char *estado = textoDoEstado(jogador->state);
+    const FighterAnimation *anim = getAnimationForState(assets, jogador->state);
 
-    DrawRectangle(x, y, LARGURA_PERSONAGEM, ALTURA_PERSONAGEM, cor);
-    DrawRectangleLines(x, y, LARGURA_PERSONAGEM, ALTURA_PERSONAGEM, jogador->esquivaTicks > 0 ? SKYBLUE : WHITE);
-    DrawText(rotulo, x + 15, y + 40, 20, WHITE);
-    DrawText(estado, x - 8, y - 24, 18, cor);
+    if (anim != NULL && anim->totalFrames > 0)
+        renderSpriteAnimado(jogador, anim);
+    else
+        DrawRectangle(x, y, LARGURA_PERSONAGEM, ALTURA_PERSONAGEM, cor);
+
+    DrawText(rotulo, x + 18, y - 22, 18, WHITE);
 }
 
 void resetPlayerPosition(Jogador *jogador, float posX, float posY, int olhandoDireita)

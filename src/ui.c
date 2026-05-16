@@ -16,6 +16,19 @@ Texture2D bgMarcoZero;
 Texture2D bgBoaViagem;
 Texture2D bgJaqueira;
 Texture2D bgMenu;
+Texture2D bgPlayerSelect;
+
+#define SELECT_J1_RETRATO_X 207
+#define SELECT_J1_RETRATO_Y 234
+#define SELECT_J2_RETRATO_X 816
+#define SELECT_J2_RETRATO_Y 240
+#define SELECT_RETRATO_LARGURA 258
+#define SELECT_RETRATO_ALTURA 259
+#define SELECT_J1_NOME_X 195
+#define SELECT_J1_NOME_Y 580
+#define SELECT_J2_NOME_X 804
+#define SELECT_J2_NOME_Y 580
+#define SELECT_NOME_LARGURA 288
 
 static float distanciaJogadores(Jogador *jogador1, Jogador *jogador2) {
     float dx = jogador1->posX - jogador2->posX;
@@ -33,6 +46,7 @@ void carregarCenarios() {
     bgBoaViagem = LoadTexture("assets/backgrounds/boa_viagem.png");
     bgJaqueira  = LoadTexture("assets/backgrounds/jaqueira.png");
     bgMenu      = LoadTexture("assets/backgrounds/menu.png");
+    bgPlayerSelect = LoadTexture("assets/backgrounds/player_select.png");
 }
 
 /* Chama isso no fechamento do jogo, antes do CloseWindow() */
@@ -41,6 +55,7 @@ void descarregarCenarios() {
     UnloadTexture(bgBoaViagem);
     UnloadTexture(bgJaqueira);
     UnloadTexture(bgMenu);
+    UnloadTexture(bgPlayerSelect);
 }
 
 
@@ -140,34 +155,95 @@ void desenharMenuPrincipal(Texture2D background) {
     DrawText("ESC para sair", cx - MeasureText("ESC para sair", 20) / 2, 430, 20, GRAY);
 }
 
+static void desenharRetratoSelecao(const FighterAssets *assets, Rectangle destino, Color corFallback, const char *rotulo)
+{
+    Texture2D retrato = getPortraitForFighter(assets);
+
+    if (retrato.id != 0)
+    {
+        Rectangle origem = (Rectangle){0, 0, (float)retrato.width, (float)retrato.height};
+
+        if (assets->idle.totalFrames > 0 && retrato.id == assets->idle.frames[0].id)
+            origem = assets->idle.sources[0];
+
+        DrawTexturePro(
+            retrato,
+            origem,
+            destino,
+            (Vector2){0, 0},
+            0.0f,
+            WHITE
+        );
+        return;
+    }
+
+    DrawRectangleRec(destino, Fade(corFallback, 0.35f));
+    DrawRectangleLinesEx(destino, 3, corFallback);
+    DrawText(rotulo, (int)destino.x + 24, (int)destino.y + (int)destino.height / 2 - 16, 32, WHITE);
+}
+
+static void desenharNomeCentralizado(const char *nome, int x, int y, int largura, Color cor)
+{
+    int fonte = 30;
+    int textoLargura = MeasureText(nome, fonte);
+
+    while (textoLargura > largura && fonte > 18)
+    {
+        fonte -= 2;
+        textoLargura = MeasureText(nome, fonte);
+    }
+
+    DrawText(nome, x + (largura - textoLargura) / 2, y, fonte, cor);
+}
+
 /*
- * Desenha a tela de seleção de personagem para os dois jogadores.
+ * Desenha a tela de seleção usando o fundo pronto e retratos dinâmicos.
  */
 void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual) {
-    const char *nomes[TOTAL_PERSONAGENS] = {
-        "Joao Campos", "Magrao", "Kuki",
-        "Grafite", "Clarisse Lispector", "Ariano Suassuna", "Tojal"
-    };
     const char *cenarios[] = { "Marco Zero", "Praia de Boa Viagem", "Parque da Jaqueira" };
+    Personagem personagemJ1 = getPersonagem(selecaoJ1);
+    Personagem personagemJ2 = getPersonagem(selecaoJ2);
+    const FighterAssets *assetsJ1 = getFighterAssets(selecaoJ1);
+    const FighterAssets *assetsJ2 = getFighterAssets(selecaoJ2);
 
-    ClearBackground(BLACK);
-    DrawText("ESCOLHA SEU PERSONAGEM", LARGURA_TELA / 2 - 200, 50, 32, YELLOW);
-
-    /* Cenário selecionado */
-    DrawText("Cenario:", 50, 120, 20, GRAY);
-    DrawText(cenarios[cenarioAtual], 140, 120, 20, ORANGE);
-    DrawText("J1: Q/E para mudar cenario", 50, 145, 16, GRAY);
-
-    DrawText("J1: A/D para navegar | ENTER confirma", 50, ALTURA_TELA - 80, 18, RED);
-    DrawText("J2: SETA ESQ/DIR para navegar | NUMPAD 1 confirma", 50, ALTURA_TELA - 50, 18, BLUE);
-
-    for (int i = 0; i < TOTAL_PERSONAGENS; i++) {
-        Color cor = WHITE;
-        if (i == selecaoJ1) cor = RED;
-        if (i == selecaoJ2) cor = BLUE;
-        if (i == selecaoJ1 && i == selecaoJ2) cor = PURPLE;
-        DrawText(nomes[i], 100 + (i % 4) * 280, 200 + (i / 4) * 120, 22, cor);
+    if (bgPlayerSelect.id != 0)
+    {
+        DrawTexturePro(
+            bgPlayerSelect,
+            (Rectangle){0, 0, (float)bgPlayerSelect.width, (float)bgPlayerSelect.height},
+            (Rectangle){0, 0, LARGURA_TELA, ALTURA_TELA},
+            (Vector2){0, 0},
+            0.0f,
+            WHITE
+        );
     }
+    else
+    {
+        ClearBackground(BLACK);
+    }
+
+    desenharRetratoSelecao(
+        assetsJ1,
+        (Rectangle){SELECT_J1_RETRATO_X, SELECT_J1_RETRATO_Y, SELECT_RETRATO_LARGURA, SELECT_RETRATO_ALTURA},
+        RED,
+        "J1"
+    );
+    desenharRetratoSelecao(
+        assetsJ2,
+        (Rectangle){SELECT_J2_RETRATO_X, SELECT_J2_RETRATO_Y, SELECT_RETRATO_LARGURA, SELECT_RETRATO_ALTURA},
+        BLUE,
+        "J2"
+    );
+
+    desenharNomeCentralizado(personagemJ1.nome, SELECT_J1_NOME_X, SELECT_J1_NOME_Y, SELECT_NOME_LARGURA, RED);
+    desenharNomeCentralizado(personagemJ2.nome, SELECT_J2_NOME_X, SELECT_J2_NOME_Y, SELECT_NOME_LARGURA, BLUE);
+
+    DrawText("<", SELECT_J1_NOME_X - 35, SELECT_J1_NOME_Y, 32, RED);
+    DrawText(">", SELECT_J1_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J1_NOME_Y, 32, RED);
+    DrawText("<", SELECT_J2_NOME_X - 35, SELECT_J2_NOME_Y, 32, BLUE);
+    DrawText(">", SELECT_J2_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J2_NOME_Y, 32, BLUE);
+
+    DrawText(TextFormat("Cenario: %s", cenarios[cenarioAtual]), 500, 650, 20, ORANGE);
 }
 
 /*

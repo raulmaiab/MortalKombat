@@ -1,5 +1,6 @@
 #include "jogo.h"
 #include "combate.h"
+#include "fighter_assets.h"
 #include "fila.h"
 #include "jogador.h"
 #include "ordenacao.h"
@@ -132,6 +133,7 @@ int executarJogo(void)
     SetTargetFPS(FPS_ALVO);
 
     carregarCenarios();
+    carregarAssetsLutadores();
 
     EstadoJogo estado = ESTADO_MENU;
     IndiceCenario cenarioAtual = CENARIO_MARCO_ZERO;
@@ -256,8 +258,8 @@ int executarJogo(void)
             break;
         case ESTADO_COMBATE:
             desenharCenario(selecionarCenario(cenarioAtual));
-            renderPlayer(&jogador1, RED, "J1");
-            renderPlayer(&jogador2, BLUE, "J2");
+            renderPlayer(&jogador1, getFighterAssets(selecaoJ1), RED, "J1");
+            renderPlayer(&jogador2, getFighterAssets(selecaoJ2), BLUE, "J2");
             desenharHUD(&jogador1, &jogador2, roundAtual, (ticksRestantesRound + FPS_ALVO - 1) / FPS_ALVO);
             break;
         case ESTADO_RESULTADO_ROUND:
@@ -271,6 +273,7 @@ int executarJogo(void)
         EndDrawing();
     }
 
+    descarregarAssetsLutadores();
     descarregarCenarios();
     CloseWindow();
     return 0;
