@@ -18,8 +18,7 @@ extern Texture2D bgMenu;
 /* ---- Funções de UI (Raylib) ---- */
 void carregarCenarios();
 void descarregarCenarios();
-void desenharHUD(Jogador *jogador1, Jogador *jogador2, int roundAtual);
-void desenharPersonagens(Jogador *jogador1, Jogador *jogador2);
+void desenharHUD(Jogador *jogador1, Jogador *jogador2, int roundAtual, int segundosRestantes);
 void desenharCenario(Texture2D background);
 void desenharMenuPrincipal(Texture2D background);
 void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual);

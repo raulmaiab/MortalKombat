@@ -29,7 +29,7 @@ static float distanciaJogadores(Jogador *jogador1, Jogador *jogador2) {
  */
 
 void carregarCenarios() {
-    bgMarcoZero = LoadTexture("assets/backgrounds/marco_zero.png");
+    bgMarcoZero = LoadTexture("assets/backgrounds/marco_zero.jpg");
     bgBoaViagem = LoadTexture("assets/backgrounds/boa_viagem.png");
     bgJaqueira  = LoadTexture("assets/backgrounds/jaqueira.png");
     bgMenu      = LoadTexture("assets/backgrounds/menu.png");
@@ -44,7 +44,7 @@ void descarregarCenarios() {
 }
 
 
-void desenharHUD(Jogador *jogador1, Jogador *jogador2, int roundAtual) {
+void desenharHUD(Jogador *jogador1, Jogador *jogador2, int roundAtual, int segundosRestantes) {
     int larguraBarra = 400;
     int alturaBarra  = 25;
     int margem       = 20;
@@ -83,43 +83,29 @@ void desenharHUD(Jogador *jogador1, Jogador *jogador2, int roundAtual) {
     int larguraTexto = MeasureText(textoRound, 28);
     DrawText(textoRound, LARGURA_TELA / 2 - larguraTexto / 2, margem, 28, WHITE);
 
+    char textoTempo[8];
+    snprintf(textoTempo, sizeof(textoTempo), "%02d", segundosRestantes);
+    int larguraTempo = MeasureText(textoTempo, 34);
+    DrawText(textoTempo, LARGURA_TELA / 2 - larguraTempo / 2, margem + 28, 34,
+             segundosRestantes <= 10 ? RED : WHITE);
+
     /* -- Placar de rounds -- */
     char placar[20];
     sprintf(placar, "%d  x  %d", jogador1->roundsVencidos, jogador2->roundsVencidos);
     int larguraPlacar = MeasureText(placar, 24);
-    DrawText(placar, LARGURA_TELA / 2 - larguraPlacar / 2, margem + 35, 24, YELLOW);
+    DrawText(placar, LARGURA_TELA / 2 - larguraPlacar / 2, margem + 62, 24, YELLOW);
 
     float distancia = distanciaJogadores(jogador1, jogador2);
     const char *alcance = distancia <= DISTANCIA_MAXIMA_ATAQUE ? "NO ALCANCE" : "LONGE";
     Color corAlcance = distancia <= DISTANCIA_MAXIMA_ATAQUE ? GREEN : RED;
     const char *textoAlcance = TextFormat("Distancia: %.0f px | %s", distancia, alcance);
-    DrawText(textoAlcance, LARGURA_TELA / 2 - MeasureText(textoAlcance, 18) / 2, margem + 68, 18, corAlcance);
+    DrawText(textoAlcance, LARGURA_TELA / 2 - MeasureText(textoAlcance, 18) / 2, margem + 92, 18, corAlcance);
 
-    DrawText(TextFormat("Fila: %d | Stun: %d", jogador1->fila.tamanho, jogador1->stunTicks),
+    DrawText(TextFormat("Fila: %d | Stun: %d | Esq: %d", jogador1->fila.tamanho, jogador1->stunTicks, jogador1->esquivaCooldown),
              margem, margem + alturaBarra + 68, 16, jogador1->stunTicks > 0 ? ORANGE : LIGHTGRAY);
-    DrawText(TextFormat("Fila: %d | Stun: %d", jogador2->fila.tamanho, jogador2->stunTicks),
+    DrawText(TextFormat("Fila: %d | Stun: %d | Esq: %d", jogador2->fila.tamanho, jogador2->stunTicks, jogador2->esquivaCooldown),
              xJ2 + larguraBarra - larguraEnergia, margem + alturaBarra + 68, 16,
              jogador2->stunTicks > 0 ? ORANGE : LIGHTGRAY);
-}
-
-/*
- * Desenha os personagens na tela como retângulos coloridos.
- * TODO: substituir por sprites PNG quando disponíveis.
- */
-void desenharPersonagens(Jogador *jogador1, Jogador *jogador2) {
-    /* Jogador 1 — retângulo vermelho por enquanto */
-    DrawRectangle((int)jogador1->posX, (int)jogador1->posY, 60, 100, RED);
-    DrawText("J1", (int)jogador1->posX + 15, (int)jogador1->posY + 40, 20, WHITE);
-    if (jogador1->stunTicks > 0) {
-        DrawText("STUN", (int)jogador1->posX - 2, (int)jogador1->posY - 24, 20, ORANGE);
-    }
-
-    /* Jogador 2 — retângulo azul por enquanto */
-    DrawRectangle((int)jogador2->posX, (int)jogador2->posY, 60, 100, BLUE);
-    DrawText("J2", (int)jogador2->posX + 15, (int)jogador2->posY + 40, 20, WHITE);
-    if (jogador2->stunTicks > 0) {
-        DrawText("STUN", (int)jogador2->posX - 2, (int)jogador2->posY - 24, 20, ORANGE);
-    }
 }
 
 /*
@@ -191,7 +177,10 @@ void desenharResultadoRound(Jogador *vencedor, Estatistica *stats, int totalStat
     ClearBackground(BLACK);
 
     char titulo[80];
-    snprintf(titulo, sizeof(titulo), "%s VENCEU O ROUND!", vencedor->personagem.nome);
+    if (vencedor != NULL)
+        snprintf(titulo, sizeof(titulo), "%s VENCEU O ROUND!", vencedor->personagem.nome);
+    else
+        snprintf(titulo, sizeof(titulo), "ROUND EMPATADO!");
     DrawText(titulo, LARGURA_TELA / 2 - MeasureText(titulo, 30) / 2, 100, 30, YELLOW);
     DrawText("ESTATISTICAS", LARGURA_TELA / 2 - 80, 180, 26, WHITE);
 
