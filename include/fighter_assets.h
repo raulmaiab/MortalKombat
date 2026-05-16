@@ -19,9 +19,11 @@ typedef struct
     FighterAnimation idle;
     FighterAnimation walk;
     FighterAnimation jump;
+    FighterAnimation dodge;
     FighterAnimation defense;
     FighterAnimation attack;
     FighterAnimation stun;
+    FighterAnimation knockdown;
     Texture2D portrait;
 } FighterAssets;
 

@@ -14,6 +14,7 @@ typedef enum
     ESTADO_MENU,
     ESTADO_SELECAO,
     ESTADO_COMBATE,
+    ESTADO_FIM_ROUND,
     ESTADO_RESULTADO_ROUND,
     ESTADO_VITORIA
 } EstadoJogo;
@@ -28,6 +29,7 @@ typedef enum
 
 #define TICK_ATAQUE 8
 #define TEMPO_ROUND_SEGUNDOS 99
+#define KNOCKDOWN_DISPLAY_TICKS 60
 #define POS_INICIAL_J1 200
 #define POS_INICIAL_J2 (LARGURA_TELA - 260)
 
@@ -122,7 +124,15 @@ static void processarFilaAtaques(Jogador *jogador1, Jogador *jogador2, Estatisti
 static void finalizarRound(int resultado, Jogador *jogador1, Jogador *jogador2,
                            Jogador **vencedorRound, Estatistica *statsRound)
 {
+    Jogador *perdedor = (resultado == 1) ? jogador2 : jogador1;
+
     *vencedorRound = (resultado == 1) ? jogador1 : jogador2;
+    if (perdedor->hp <= 0)
+    {
+        perdedor->state = KNOCKDOWN;
+        perdedor->stateTicks = 0;
+    }
+
     encerrarRound(*vencedorRound, statsRound);
     ordenarEstatisticas(statsRound, 2);
 }
@@ -140,6 +150,7 @@ int executarJogo(void)
     int tickAtual = 0;
     int roundAtual = 1;
     int ticksRestantesRound = TEMPO_ROUND_SEGUNDOS * FPS_ALVO;
+    int ticksFimRound = 0;
 
     int selecaoJ1 = JOAO_CAMPOS;
     int selecaoJ2 = GRAFITE;
@@ -208,7 +219,8 @@ int executarJogo(void)
                 if (resultado != 0)
                 {
                     finalizarRound(resultado, &jogador1, &jogador2, &vencedorRound, statsRound);
-                    estado = ESTADO_RESULTADO_ROUND;
+                    ticksFimRound = KNOCKDOWN_DISPLAY_TICKS;
+                    estado = ESTADO_FIM_ROUND;
                 }
                 else if (ticksRestantesRound == 0)
                 {
@@ -217,6 +229,15 @@ int executarJogo(void)
                     estado = ESTADO_RESULTADO_ROUND;
                 }
             }
+            break;
+
+        case ESTADO_FIM_ROUND:
+            jogador1.stateTicks++;
+            jogador2.stateTicks++;
+            if (ticksFimRound > 0)
+                ticksFimRound--;
+            else
+                estado = ESTADO_RESULTADO_ROUND;
             break;
 
         case ESTADO_RESULTADO_ROUND:
@@ -257,6 +278,7 @@ int executarJogo(void)
             desenharSelecaoPersonagem(selecaoJ1, selecaoJ2, cenarioAtual);
             break;
         case ESTADO_COMBATE:
+        case ESTADO_FIM_ROUND:
             desenharCenario(selecionarCenario(cenarioAtual));
             renderPlayer(&jogador1, getFighterAssets(selecaoJ1), RED, "J1");
             renderPlayer(&jogador2, getFighterAssets(selecaoJ2), BLUE, "J2");

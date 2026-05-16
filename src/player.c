@@ -23,18 +23,23 @@ static void atualizarTimers(Jogador *jogador)
         jogador->esquivaCooldown--;
     if (jogador->attackTicks > 0)
         jogador->attackTicks--;
+    if (jogador->ataqueAgachadoTicks > 0)
+        jogador->ataqueAgachadoTicks--;
 }
 
-static void iniciarEsquiva(Jogador *jogador, const Jogador *oponente)
+static TipoPassinho converterAtaqueAgachado(TipoPassinho passinho)
 {
-    float direcao = (oponente->posX > jogador->posX) ? -1.0f : 1.0f;
-
-    jogador->esquivaTicks = ESQUIVA_TICKS;
-    jogador->esquivaCooldown = ESQUIVA_COOLDOWN_TICKS;
-    jogador->defendendo = 0;
-    jogador->posX += direcao * ESQUIVA_DISTANCIA;
-    limitarPosicaoX(jogador);
-    limparFila(&jogador->fila);
+    switch (passinho)
+    {
+    case ATAQUE_LEVE:
+        return ATAQUE_BAIXO_LEVE;
+    case ATAQUE_MEDIO:
+        return ATAQUE_BAIXO_MEDIO;
+    case ATAQUE_ESPECIAL:
+        return ATAQUE_BAIXO_ESPECIAL;
+    default:
+        return passinho;
+    }
 }
 
 static void atualizarFisica(Jogador *jogador)
@@ -55,24 +60,42 @@ static void atualizarFisica(Jogador *jogador)
 
 static void atualizarEstado(Jogador *jogador, int moveu)
 {
-    if (jogador->stunTicks > 0)
-        jogador->state = STUN;
+    PlayerState novoEstado;
+
+    if (jogador->hp <= 0)
+        novoEstado = KNOCKDOWN;
+    else if (jogador->stunTicks > 0)
+        novoEstado = STUN;
+    else if (jogador->agachado || jogador->ataqueAgachadoTicks > 0)
+        novoEstado = CROUCH;
     else if (jogador->defendendo)
-        jogador->state = DEFENSE;
+        novoEstado = DEFENSE;
     else if (jogador->attackTicks > 0)
-        jogador->state = ATTACK;
+        novoEstado = ATTACK;
     else if (!jogador->noChao)
-        jogador->state = JUMP;
+        novoEstado = JUMP;
     else if (moveu)
-        jogador->state = WALK;
+        novoEstado = WALK;
     else
-        jogador->state = IDLE;
+        novoEstado = IDLE;
+
+    if (jogador->state != novoEstado)
+    {
+        jogador->state = novoEstado;
+        jogador->stateTicks = 0;
+    }
+    else
+    {
+        jogador->stateTicks++;
+    }
 }
 
 static Color corDoEstado(const Jogador *jogador, Color corBase)
 {
     switch (jogador->state)
     {
+    case CROUCH:
+        return SKYBLUE;
     case DEFENSE:
         return GREEN;
     case ATTACK:
@@ -81,6 +104,8 @@ static Color corDoEstado(const Jogador *jogador, Color corBase)
         return SKYBLUE;
     case STUN:
         return ORANGE;
+    case KNOCKDOWN:
+        return GRAY;
     case WALK:
         return Fade(corBase, 0.85f);
     case IDLE:
@@ -95,45 +120,53 @@ void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
 
     atualizarTimers(jogador);
     jogador->olhandoDireita = oponente->posX > jogador->posX;
+    jogador->agachado = jogador->hp > 0 &&
+                        jogador->stunTicks == 0 &&
+                        jogador->noChao &&
+                        IsKeyDown(controles.esquiva);
     jogador->defendendo = jogador->stunTicks == 0 &&
                           jogador->esquivaTicks == 0 &&
                           jogador->noChao &&
+                          !jogador->agachado &&
                           (IsKeyDown(controles.defesa) ||
                            (controles.defesaAlternativa != 0 && IsKeyDown(controles.defesaAlternativa)));
 
-    if (jogador->stunTicks == 0)
+    if (jogador->hp > 0 && jogador->stunTicks == 0)
     {
         if (!jogador->defendendo)
         {
             if (IsKeyPressed(controles.ataqueLeve))
             {
-                enfileirarPassinho(&jogador->fila, ATAQUE_LEVE);
-                jogador->attackTicks = ATTACK_STATE_TICKS;
+                enfileirarPassinho(&jogador->fila, jogador->agachado ? converterAtaqueAgachado(ATAQUE_LEVE) : ATAQUE_LEVE);
+                jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
+                jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
             }
             if (IsKeyPressed(controles.ataqueMedio))
             {
-                enfileirarPassinho(&jogador->fila, ATAQUE_MEDIO);
-                jogador->attackTicks = ATTACK_STATE_TICKS;
+                enfileirarPassinho(&jogador->fila, jogador->agachado ? converterAtaqueAgachado(ATAQUE_MEDIO) : ATAQUE_MEDIO);
+                jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
+                jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
             }
             if (IsKeyPressed(controles.ataqueEspecial))
             {
-                enfileirarPassinho(&jogador->fila, ATAQUE_ESPECIAL);
-                jogador->attackTicks = ATTACK_STATE_TICKS;
+                enfileirarPassinho(&jogador->fila, jogador->agachado ? converterAtaqueAgachado(ATAQUE_ESPECIAL) : ATAQUE_ESPECIAL);
+                jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
+                jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
             }
-            if (IsKeyPressed(controles.esquiva) && jogador->esquivaCooldown == 0)
-                iniciarEsquiva(jogador, oponente);
         }
 
-        if (!jogador->defendendo && jogador->esquivaTicks == 0)
+        if (!jogador->agachado && jogador->ataqueAgachadoTicks == 0 && jogador->esquivaTicks == 0)
         {
+            float velocidade = jogador->defendendo ? VELOCIDADE_DEFESA : VELOCIDADE_MOVIMENTO;
+
             if (IsKeyDown(controles.esquerda))
             {
-                jogador->posX -= VELOCIDADE_MOVIMENTO;
+                jogador->posX -= velocidade;
                 moveu = 1;
             }
             if (IsKeyDown(controles.direita))
             {
-                jogador->posX += VELOCIDADE_MOVIMENTO;
+                jogador->posX += velocidade;
                 moveu = 1;
             }
             if (IsKeyPressed(controles.pulo) && jogador->noChao)
@@ -152,6 +185,7 @@ void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
 static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *anim)
 {
     int frameAtual;
+    int ticksPorFrame;
     Texture2D textura;
     Rectangle origem;
     Rectangle destino;
@@ -159,7 +193,20 @@ static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *
     if (anim == NULL || anim->totalFrames == 0)
         return;
 
-    frameAtual = (int)(GetTime() / anim->frameDuration) % anim->totalFrames;
+    ticksPorFrame = (int)(anim->frameDuration * FPS_ALVO + 0.5f);
+    if (ticksPorFrame < 1)
+        ticksPorFrame = 1;
+
+    frameAtual = jogador->stateTicks / ticksPorFrame;
+    if (jogador->state == IDLE || jogador->state == WALK || jogador->state == JUMP || jogador->state == DEFENSE || jogador->state == CROUCH)
+    {
+        frameAtual %= anim->totalFrames;
+    }
+    else if (frameAtual >= anim->totalFrames)
+    {
+        frameAtual = anim->totalFrames - 1;
+    }
+
     textura = anim->frames[frameAtual];
     origem = anim->sources[frameAtual];
     destino = (Rectangle){
@@ -199,9 +246,12 @@ void resetPlayerPosition(Jogador *jogador, float posX, float posY, int olhandoDi
     jogador->velY = 0.0f;
     jogador->noChao = 1;
     jogador->defendendo = 0;
+    jogador->agachado = 0;
+    jogador->ataqueAgachadoTicks = 0;
     jogador->esquivaTicks = 0;
     jogador->esquivaCooldown = 0;
     jogador->attackTicks = 0;
+    jogador->stateTicks = 0;
     jogador->olhandoDireita = olhandoDireita;
     jogador->state = IDLE;
     limparFila(&jogador->fila);

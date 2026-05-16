@@ -8,6 +8,9 @@ typedef enum {
     ATAQUE_LEVE,
     ATAQUE_MEDIO,
     ATAQUE_ESPECIAL,
+    ATAQUE_BAIXO_LEVE,
+    ATAQUE_BAIXO_MEDIO,
+    ATAQUE_BAIXO_ESPECIAL,
     ESQUIVA
 } TipoPassinho;
 

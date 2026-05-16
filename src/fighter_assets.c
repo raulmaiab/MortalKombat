@@ -86,17 +86,30 @@ static int carregarSpriteSheetTeste(FighterAssets *assets, const char *pasta)
     for (int i = 0; i < 8; i++)
         adicionarFrameSpriteSheet(&assets->jump, sheet, i, 2);
 
+    assets->dodge.totalFrames = 0;
+    assets->dodge.frameDuration = 0.08f;
+    for (int i = 0; i < 4; i++)
+        adicionarFrameSpriteSheet(&assets->dodge, sheet, i, 3);
+
+    assets->stun.totalFrames = 0;
+    assets->stun.frameDuration = 0.10f;
+    for (int i = 0; i < 8; i++)
+        adicionarFrameSpriteSheet(&assets->stun, sheet, i, 4);
+
+    assets->knockdown.totalFrames = 0;
+    assets->knockdown.frameDuration = 0.12f;
+    for (int i = 0; i < 2; i++)
+        adicionarFrameSpriteSheet(&assets->knockdown, sheet, i, 5);
+
     assets->defense.totalFrames = 0;
-    assets->defense.frameDuration = 0.12f;
-    adicionarFrameSpriteSheet(&assets->defense, sheet, 0, 0);
+    assets->defense.frameDuration = 0.10f;
+    for (int i = 0; i < 5; i++)
+        adicionarFrameSpriteSheet(&assets->defense, sheet, i, 6);
 
     assets->attack.totalFrames = 0;
     assets->attack.frameDuration = 0.08f;
-    adicionarFrameSpriteSheet(&assets->attack, sheet, 0, 2);
-
-    assets->stun.totalFrames = 0;
-    assets->stun.frameDuration = 0.14f;
-    adicionarFrameSpriteSheet(&assets->stun, sheet, 0, 0);
+    for (int i = 0; i < 8; i++)
+        adicionarFrameSpriteSheet(&assets->attack, sheet, i, 7);
 
     return 1;
 }
@@ -138,6 +151,14 @@ static void carregarFallbacksAtuais(FighterAssets *assets, const char *pasta)
         carregarFrameSeExistir(&assets->defense, path);
     }
 
+    if (assets->dodge.totalFrames == 0 && assets->defense.totalFrames > 0)
+    {
+        assets->dodge.frames[0] = assets->defense.frames[0];
+        assets->dodge.sources[0] = assets->defense.sources[0];
+        assets->dodge.totalFrames = 1;
+        assets->dodge.frameDuration = 0.08f;
+    }
+
     if (assets->jump.totalFrames == 0)
     {
         snprintf(path, sizeof(path), "assets/fighters/%s/golpes_pulo.png", pasta);
@@ -169,7 +190,17 @@ static void carregarFallbacksAtuais(FighterAssets *assets, const char *pasta)
     if (assets->stun.totalFrames == 0 && assets->defense.totalFrames > 0)
     {
         assets->stun.frames[0] = assets->defense.frames[0];
+        assets->stun.sources[0] = assets->defense.sources[0];
         assets->stun.totalFrames = 1;
+        assets->stun.frameDuration = 0.14f;
+    }
+
+    if (assets->knockdown.totalFrames == 0 && assets->stun.totalFrames > 0)
+    {
+        assets->knockdown.frames[0] = assets->stun.frames[0];
+        assets->knockdown.sources[0] = assets->stun.sources[0];
+        assets->knockdown.totalFrames = 1;
+        assets->knockdown.frameDuration = 0.12f;
     }
 }
 
@@ -194,9 +225,11 @@ static void carregarAssetsPersonagem(IndicePersonagem indice)
         carregarAnimacaoPadrao(&assets->idle, pasta, "idle", 0.16f);
         carregarAnimacaoPadrao(&assets->walk, pasta, "walk", 0.10f);
         carregarAnimacaoPadrao(&assets->jump, pasta, "jump", 0.12f);
+        carregarAnimacaoPadrao(&assets->dodge, pasta, "dodge", 0.08f);
         carregarAnimacaoPadrao(&assets->defense, pasta, "defense", 0.12f);
         carregarAnimacaoPadrao(&assets->attack, pasta, "attack", 0.08f);
         carregarAnimacaoPadrao(&assets->stun, pasta, "stun", 0.14f);
+        carregarAnimacaoPadrao(&assets->knockdown, pasta, "knockdown", 0.12f);
         carregarFallbacksAtuais(assets, pasta);
     }
 
@@ -211,7 +244,7 @@ void carregarAssetsLutadores(void)
 
 void descarregarAssetsLutadores(void)
 {
-    unsigned int texturasDescarregadas[TOTAL_PERSONAGENS * 7 * MAX_ANIM_FRAMES];
+    unsigned int texturasDescarregadas[TOTAL_PERSONAGENS * 8 * MAX_ANIM_FRAMES];
     int totalDescarregadas = 0;
 
     for (int i = 0; i < TOTAL_PERSONAGENS; i++)
@@ -219,10 +252,11 @@ void descarregarAssetsLutadores(void)
         FighterAssets *assets = &lutadores[i];
         FighterAnimation *animacoes[] = {
             &assets->idle, &assets->walk, &assets->jump,
-            &assets->defense, &assets->attack, &assets->stun
+            &assets->dodge, &assets->defense, &assets->attack,
+            &assets->stun, &assets->knockdown
         };
 
-        for (int a = 0; a < 6; a++)
+        for (int a = 0; a < 8; a++)
         {
             for (int f = 0; f < animacoes[a]->totalFrames; f++)
             {
@@ -281,12 +315,16 @@ const FighterAnimation *getAnimationForState(const FighterAssets *assets, Player
         return &assets->walk;
     case JUMP:
         return &assets->jump;
+    case CROUCH:
+        return &assets->dodge;
     case DEFENSE:
         return &assets->defense;
     case ATTACK:
         return &assets->attack;
     case STUN:
         return &assets->stun;
+    case KNOCKDOWN:
+        return &assets->knockdown;
     case IDLE:
     default:
         return &assets->idle;

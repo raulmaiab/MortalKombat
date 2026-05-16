@@ -19,6 +19,28 @@ static void aplicarStun(Jogador *alvo, int tickAtual)
     alvo->golpesSeguidos = 0;
 }
 
+static int ataqueBaixo(TipoPassinho passinho)
+{
+    return passinho == ATAQUE_BAIXO_LEVE ||
+           passinho == ATAQUE_BAIXO_MEDIO ||
+           passinho == ATAQUE_BAIXO_ESPECIAL;
+}
+
+static int ataqueValido(TipoPassinho passinho)
+{
+    return passinho == ATAQUE_LEVE ||
+           passinho == ATAQUE_MEDIO ||
+           passinho == ATAQUE_ESPECIAL ||
+           ataqueBaixo(passinho);
+}
+
+static int defesaDeFrente(const Jogador *defensor, const Jogador *atacante)
+{
+    if (atacante->posX > defensor->posX)
+        return defensor->olhandoDireita;
+    return !defensor->olhandoDireita;
+}
+
 /*
  * Processa um passinho atacante contra o alvo.
  * Verifica distância, energia e stun antes de aplicar dano.
@@ -34,14 +56,17 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
     switch (passinho)
     {
     case ATAQUE_LEVE:
+    case ATAQUE_BAIXO_LEVE:
         custo = energiaConsumida[0];
         dano = atacante->personagem.danoLeve;
         break;
     case ATAQUE_MEDIO:
+    case ATAQUE_BAIXO_MEDIO:
         custo = energiaConsumida[1];
         dano = atacante->personagem.danomedio;
         break;
     case ATAQUE_ESPECIAL:
+    case ATAQUE_BAIXO_ESPECIAL:
         custo = energiaConsumida[2];
         dano = atacante->personagem.danoEspecial;
         break;
@@ -49,7 +74,7 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
         break;
     }
 
-    if ((passinho == ATAQUE_LEVE || passinho == ATAQUE_MEDIO || passinho == ATAQUE_ESPECIAL) && atacante->energia < custo)
+    if (ataqueValido(passinho) && atacante->energia < custo)
     {
         return;
     }
@@ -59,14 +84,20 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
         return;
     }
 
-    if (passinho == ATAQUE_LEVE || passinho == ATAQUE_MEDIO || passinho == ATAQUE_ESPECIAL)
+    if (ataqueValido(passinho))
     {
         atacante->energia -= custo;
         if (atacante->energia < 0)
             atacante->energia = 0;
     }
 
-    if (alvo->esquivaTicks > 0)
+    if (!ataqueBaixo(passinho) && (alvo->agachado || alvo->ataqueAgachadoTicks > 0))
+    {
+        stats[1].esquivasRealizadas++;
+        return;
+    }
+
+    if (ataqueBaixo(passinho) && !alvo->noChao)
     {
         stats[1].esquivasRealizadas++;
         return;
@@ -79,7 +110,7 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
         return;
     }
 
-    if (alvo->defendendo && alvo->noChao)
+    if (!ataqueBaixo(passinho) && alvo->defendendo && alvo->noChao && defesaDeFrente(alvo, atacante))
     {
         alvo->stunTicks = BLOCKSTUN_TICKS;
         limparFila(&alvo->fila);

@@ -14,9 +14,11 @@ typedef enum PlayerState
     IDLE,
     WALK,
     JUMP,
+    CROUCH,
     DEFENSE,
     ATTACK,
-    STUN
+    STUN,
+    KNOCKDOWN
 } PlayerState;
 
 /* Atributos únicos de cada personagem */
@@ -46,9 +48,12 @@ typedef struct
     float velY;
     int noChao;
     int defendendo;
+    int agachado;
+    int ataqueAgachadoTicks;
     int esquivaTicks;
     int esquivaCooldown;
     int attackTicks;
+    int stateTicks;
     int olhandoDireita;
     PlayerState state;
 } Jogador;

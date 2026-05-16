@@ -38,9 +38,12 @@ void inicializarJogador(Jogador *jogador, IndicePersonagem indice, float posX, f
     jogador->velY = 0.0f;
     jogador->noChao = 1;
     jogador->defendendo = 0;
+    jogador->agachado = 0;
+    jogador->ataqueAgachadoTicks = 0;
     jogador->esquivaTicks = 0;
     jogador->esquivaCooldown = 0;
     jogador->attackTicks = 0;
+    jogador->stateTicks = 0;
     jogador->olhandoDireita = olhandoDireita;
     jogador->state = IDLE;
     inicializarFila(&jogador->fila);
@@ -60,9 +63,12 @@ void resetarJogador(Jogador *jogador)
     jogador->velY = 0.0f;
     jogador->noChao = 1;
     jogador->defendendo = 0;
+    jogador->agachado = 0;
+    jogador->ataqueAgachadoTicks = 0;
     jogador->esquivaTicks = 0;
     jogador->esquivaCooldown = 0;
     jogador->attackTicks = 0;
+    jogador->stateTicks = 0;
     jogador->state = IDLE;
     limparFila(&jogador->fila);
 }
