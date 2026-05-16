@@ -180,18 +180,7 @@ static Texture2D carregarPortrait(const FighterAssets *assets, const char *pasta
     snprintf(path, sizeof(path), "assets/fighters/%s/portrait.png", pasta);
     if (FileExists(path))
         return LoadTexture(path);
-
-    snprintf(path, sizeof(path), "assets/fighters/%s/retrato.png", pasta);
-    if (FileExists(path))
-        return LoadTexture(path);
-
-    snprintf(path, sizeof(path), "assets/fighters/%s/select.png", pasta);
-    if (FileExists(path))
-        return LoadTexture(path);
-
-    if (assets->idle.totalFrames > 0)
-        return assets->idle.frames[0];
-
+        
     return (Texture2D){0};
 }
 

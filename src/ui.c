@@ -7,8 +7,8 @@
 #include <string.h>
 
 /* Cores temáticas */
-#define COR_HP_J1       RED
-#define COR_HP_J2       BLUE
+#define COR_HP_J1       BLUE
+#define COR_HP_J2       RED
 #define COR_ENERGIA     YELLOW
 #define COR_FUNDO_HUD   DARKGRAY
 
@@ -18,17 +18,17 @@ Texture2D bgJaqueira;
 Texture2D bgMenu;
 Texture2D bgPlayerSelect;
 
-#define SELECT_J1_RETRATO_X 207
-#define SELECT_J1_RETRATO_Y 234
-#define SELECT_J2_RETRATO_X 816
-#define SELECT_J2_RETRATO_Y 240
-#define SELECT_RETRATO_LARGURA 258
-#define SELECT_RETRATO_ALTURA 259
-#define SELECT_J1_NOME_X 195
-#define SELECT_J1_NOME_Y 580
-#define SELECT_J2_NOME_X 804
-#define SELECT_J2_NOME_Y 580
-#define SELECT_NOME_LARGURA 288
+#define SELECT_J1_RETRATO_X 228
+#define SELECT_J1_RETRATO_Y 210
+#define SELECT_J2_RETRATO_X 848
+#define SELECT_J2_RETRATO_Y 210
+#define SELECT_RETRATO_LARGURA 240
+#define SELECT_RETRATO_ALTURA 200
+#define SELECT_J1_NOME_X 240
+#define SELECT_J1_NOME_Y 490
+#define SELECT_J2_NOME_X 860
+#define SELECT_J2_NOME_Y 490
+#define SELECT_NOME_LARGURA 220
 
 static float distanciaJogadores(Jogador *jogador1, Jogador *jogador2) {
     float dx = jogador1->posX - jogador2->posX;
@@ -235,13 +235,13 @@ void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual) {
         "J2"
     );
 
-    desenharNomeCentralizado(personagemJ1.nome, SELECT_J1_NOME_X, SELECT_J1_NOME_Y, SELECT_NOME_LARGURA, RED);
-    desenharNomeCentralizado(personagemJ2.nome, SELECT_J2_NOME_X, SELECT_J2_NOME_Y, SELECT_NOME_LARGURA, BLUE);
+    desenharNomeCentralizado(personagemJ1.nome, SELECT_J1_NOME_X, SELECT_J1_NOME_Y, SELECT_NOME_LARGURA, BLUE);
+    desenharNomeCentralizado(personagemJ2.nome, SELECT_J2_NOME_X, SELECT_J2_NOME_Y, SELECT_NOME_LARGURA, RED);
 
-    DrawText("<", SELECT_J1_NOME_X - 35, SELECT_J1_NOME_Y, 32, RED);
-    DrawText(">", SELECT_J1_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J1_NOME_Y, 32, RED);
-    DrawText("<", SELECT_J2_NOME_X - 35, SELECT_J2_NOME_Y, 32, BLUE);
-    DrawText(">", SELECT_J2_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J2_NOME_Y, 32, BLUE);
+    DrawText("<", SELECT_J1_NOME_X - 25, SELECT_J1_NOME_Y, 32, BLUE);
+    DrawText(">", SELECT_J1_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J1_NOME_Y, 32, BLUE);
+    DrawText("<", SELECT_J2_NOME_X - 25, SELECT_J2_NOME_Y, 32, RED);
+    DrawText(">", SELECT_J2_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J2_NOME_Y, 32, RED);
 
     DrawText(TextFormat("Cenario: %s", cenarios[cenarioAtual]), 500, 650, 20, ORANGE);
 }
