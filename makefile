@@ -4,7 +4,7 @@ LIBS = -lraylib -lm -framework OpenGL -framework Cocoa -framework IOKit
 
 SRC = $(wildcard src/*.c)
 OBJ = $(SRC:.c=.o)
-TARGET = batalha_passinho
+TARGET = batalha_passinho.exe
 
 all: $(TARGET)
 
