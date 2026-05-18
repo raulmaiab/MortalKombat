@@ -12,7 +12,7 @@ Personagem getPersonagem(IndicePersonagem indice)
         {"Joao Campos", 120, 8, 15, 30, 5},
         {"Magrao", 110, 7, 13, 25, 4},
         {"Kuki", 90, 9, 16, 28, 8},
-        {"Grafite", 100, 10, 18, 35, 6},
+        {"Anderson Neiff", 100, 10, 18, 35, 6},
         {"Clarisse Lispector", 95, 7, 14, 40, 5},
         {"Ariano Suassuna", 105, 8, 15, 45, 4},
         {"Tojal", 100, 9, 16, 32, 7},
