@@ -7,7 +7,7 @@ static const char *pastasPersonagens[TOTAL_PERSONAGENS] = {
     "joao_campos",
     "ds87",
     "kuki",
-    "grafite",
+    "odiferenciado",
     "clarisse",
     "ariano",
     "tojal"
