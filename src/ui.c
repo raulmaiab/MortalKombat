@@ -196,10 +196,52 @@ static void desenharNomeCentralizado(const char *nome, int x, int y, int largura
     DrawText(nome, x + (largura - textoLargura) / 2, y, fonte, cor);
 }
 
+static void desenharAbaControles(void)
+{
+    Rectangle aba = {1020, 30, 190, 34};
+
+    DrawRectangleRounded(aba, 0.18f, 8, Fade(BLACK, 0.62f));
+    DrawRectangleRoundedLines(aba, 0.18f, 8, Fade(WHITE, 0.5f));
+    DrawText("I", 1042, 38, 18, YELLOW);
+    DrawText("Controles", 1070, 38, 18, WHITE);
+}
+
+static void desenharPainelControles(void)
+{
+    Rectangle painel = {260, 105, 760, 495};
+    int y = 170;
+
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(BLACK, 0.45f));
+    DrawRectangleRounded(painel, 0.04f, 10, Fade((Color){18, 18, 22, 255}, 0.95f));
+    DrawRectangleRoundedLines(painel, 0.04f, 10, Fade(YELLOW, 0.8f));
+
+    DrawText("CONTROLES", 535, 130, 28, YELLOW);
+    DrawText("Pressione I para fechar", 548, 560, 18, LIGHTGRAY);
+
+    DrawText("JOGADOR 1", 330, y, 22, BLUE);
+    DrawText("Mover: A / D", 330, y + 40, 20, WHITE);
+    DrawText("Pular: W", 330, y + 72, 20, WHITE);
+    DrawText("Agachar: S", 330, y + 104, 20, WHITE);
+    DrawText("Defender: F ou E", 330, y + 136, 20, WHITE);
+    DrawText("Ataques: G / H / T", 330, y + 168, 20, WHITE);
+    DrawText("Confirmar: ENTER", 330, y + 200, 20, WHITE);
+
+    DrawText("JOGADOR 2", 705, y, 22, RED);
+    DrawText("Mover: SETAS", 705, y + 40, 20, WHITE);
+    DrawText("Pular: CIMA", 705, y + 72, 20, WHITE);
+    DrawText("Agachar: BAIXO", 705, y + 104, 20, WHITE);
+    DrawText("Defender: SHIFT DIR", 705, y + 136, 20, WHITE);
+    DrawText("Ataques: J / K / L", 705, y + 168, 20, WHITE);
+    DrawText("Confirmar: L ou SHIFT", 705, y + 200, 20, WHITE);
+
+    DrawText("Cenario: Q / E", 545, 470, 20, ORANGE);
+    DrawText("Alternativas J2: INSERT e KP_1 / KP_2 / KP_3", 405, 510, 18, LIGHTGRAY);
+}
+
 /*
  * Desenha a tela de seleção usando o fundo pronto e retratos dinâmicos.
  */
-void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual) {
+void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual, int mostrarControles) {
     const char *cenarios[] = { "Marco Zero", "Praia de Boa Viagem", "Parque da Jaqueira" };
     Personagem personagemJ1 = getPersonagem(selecaoJ1);
     Personagem personagemJ2 = getPersonagem(selecaoJ2);
@@ -244,8 +286,10 @@ void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual) {
     DrawText(">", SELECT_J2_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J2_NOME_Y, 32, RED);
 
     DrawText(TextFormat("Cenario: %s", cenarios[cenarioAtual]), 500, 650, 20, ORANGE);
-    DrawText("J1: A/D escolhe, ENTER confirma | J2: SETAS escolhem, SHIFT-DIR ou L confirma", 270, 680, 18, LIGHTGRAY);
-    DrawText("Luta: J1 WASD + F/G/H/T | J2 SETAS + SHIFT-DIR/J/K/L", 360, 704, 16, LIGHTGRAY);
+    desenharAbaControles();
+
+    if (mostrarControles)
+        desenharPainelControles();
 }
 
 /*

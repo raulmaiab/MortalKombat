@@ -23,7 +23,7 @@ void descarregarCenarios();
 void desenharHUD(Jogador *jogador1, Jogador *jogador2, int roundAtual, int segundosRestantes);
 void desenharCenario(Texture2D background);
 void desenharMenuPrincipal(Texture2D background);
-void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual);
+void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual, int mostrarControles);
 void desenharResultadoRound(Jogador *vencedor, Estatistica *stats, int totalStats);
 void desenharTelaVitoria(Jogador *vencedor);
 

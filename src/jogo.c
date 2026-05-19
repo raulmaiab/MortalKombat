@@ -166,6 +166,7 @@ int executarJogo(void)
     int selecaoJ2 = GRAFITE;
     int confirmouJ1 = 0;
     int confirmouJ2 = 0;
+    int mostrarControles = 0;
 
     Jogador jogador1;
     Jogador jogador2;
@@ -184,6 +185,9 @@ int executarJogo(void)
             break;
 
         case ESTADO_SELECAO:
+            if (IsKeyPressed(KEY_I))
+                mostrarControles = !mostrarControles;
+
             if (IsKeyPressed(KEY_D) && selecaoJ1 < TOTAL_PERSONAGENS - 1)
                 selecaoJ1++;
             if (IsKeyPressed(KEY_A) && selecaoJ1 > 0)
@@ -209,6 +213,7 @@ int executarJogo(void)
                                &roundAtual, &ticksRestantesRound);
                 confirmouJ1 = 0;
                 confirmouJ2 = 0;
+                mostrarControles = 0;
                 estado = ESTADO_COMBATE;
             }
             break;
@@ -271,6 +276,7 @@ int executarJogo(void)
                 selecaoJ1 = JOAO_CAMPOS;
                 selecaoJ2 = GRAFITE;
                 cenarioAtual = CENARIO_MARCO_ZERO;
+                mostrarControles = 0;
                 estado = ESTADO_SELECAO;
             }
             break;
@@ -285,7 +291,7 @@ int executarJogo(void)
             desenharMenuPrincipal(bgMenu);
             break;
         case ESTADO_SELECAO:
-            desenharSelecaoPersonagem(selecaoJ1, selecaoJ2, cenarioAtual);
+            desenharSelecaoPersonagem(selecaoJ1, selecaoJ2, cenarioAtual, mostrarControles);
             break;
         case ESTADO_COMBATE:
         case ESTADO_FIM_ROUND:
