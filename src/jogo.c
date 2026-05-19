@@ -53,7 +53,9 @@ static void iniciarPartida(Jogador *jogador1, Jogador *jogador2, Estatistica *st
 {
     inicializarJogador(jogador1, selecaoJ1, POS_INICIAL_J1, CHAO_Y, 1);
     inicializarJogador(jogador2, selecaoJ2, POS_INICIAL_J2, CHAO_Y, 0);
+
     prepararStats(statsRound, jogador1, jogador2);
+
     *roundAtual = 1;
     *ticksRestantesRound = TEMPO_ROUND_SEGUNDOS * FPS_ALVO;
 }
@@ -62,11 +64,15 @@ static void iniciarProximoRound(Jogador *jogador1, Jogador *jogador2, Estatistic
                                 int *roundAtual, int *ticksRestantesRound)
 {
     (*roundAtual)++;
+
     resetarJogador(jogador1);
     resetarJogador(jogador2);
+
     resetPlayerPosition(jogador1, POS_INICIAL_J1, CHAO_Y, 1);
     resetPlayerPosition(jogador2, POS_INICIAL_J2, CHAO_Y, 0);
+
     prepararStats(statsRound, jogador1, jogador2);
+
     *ticksRestantesRound = TEMPO_ROUND_SEGUNDOS * FPS_ALVO;
 }
 
@@ -77,8 +83,10 @@ static int compararHpPercentual(Jogador *jogador1, Jogador *jogador2)
 
     if (hpJ1 > hpJ2)
         return 1;
+
     if (hpJ2 > hpJ1)
         return 2;
+
     return 0;
 }
 
@@ -88,8 +96,10 @@ static Texture2D selecionarCenario(IndiceCenario cenarioAtual)
     {
     case CENARIO_BOA_VIAGEM:
         return bgBoaViagem;
+
     case CENARIO_JAQUEIRA:
         return bgJaqueira;
+
     case CENARIO_MARCO_ZERO:
     default:
         return bgMarcoZero;
@@ -104,6 +114,7 @@ static void processarFilaAtaques(Jogador *jogador1, Jogador *jogador2, Estatisti
     if (!filaVazia(&jogador1->fila))
     {
         TipoPassinho p = desenfileirarPassinho(&jogador1->fila);
+
         if (p != ESQUIVA)
             processarPassinho(p, jogador1, jogador2, statsRound, tickAtual);
     }
@@ -111,10 +122,13 @@ static void processarFilaAtaques(Jogador *jogador1, Jogador *jogador2, Estatisti
     if (!filaVazia(&jogador2->fila))
     {
         TipoPassinho p = desenfileirarPassinho(&jogador2->fila);
+
         if (p != ESQUIVA)
         {
             Estatistica statsInvertido[2] = {statsRound[1], statsRound[0]};
+
             processarPassinho(p, jogador2, jogador1, statsInvertido, tickAtual);
+
             statsRound[0] = statsInvertido[1];
             statsRound[1] = statsInvertido[0];
         }
@@ -127,6 +141,7 @@ static void finalizarRound(int resultado, Jogador *jogador1, Jogador *jogador2,
     Jogador *perdedor = (resultado == 1) ? jogador2 : jogador1;
 
     *vencedorRound = (resultado == 1) ? jogador1 : jogador2;
+
     if (perdedor->hp <= 0)
     {
         perdedor->state = KNOCKDOWN;
@@ -134,32 +149,40 @@ static void finalizarRound(int resultado, Jogador *jogador1, Jogador *jogador2,
     }
 
     encerrarRound(*vencedorRound, statsRound);
+
     ordenarEstatisticas(statsRound, 2);
 }
 
 int executarJogo(void)
 {
     InitWindow(LARGURA_TELA, ALTURA_TELA, TITULO_JANELA);
+
     SetTargetFPS(FPS_ALVO);
 
     carregarCenarios();
     carregarAssetsLutadores();
 
     EstadoJogo estado = ESTADO_MENU;
+
     IndiceCenario cenarioAtual = CENARIO_MARCO_ZERO;
-    int tickAtual = 0;
+
+    unsigned long long tickAtual = 0;
+
     int roundAtual = 1;
     int ticksRestantesRound = TEMPO_ROUND_SEGUNDOS * FPS_ALVO;
     int ticksFimRound = 0;
 
     int selecaoJ1 = JOAO_CAMPOS;
     int selecaoJ2 = GRAFITE;
+
     int confirmouJ1 = 0;
     int confirmouJ2 = 0;
 
-    Jogador jogador1;
-    Jogador jogador2;
-    Estatistica statsRound[2];
+    Jogador jogador1 = {0};
+    Jogador jogador2 = {0};
+
+    Estatistica statsRound[2] = {0};
+
     Jogador *vencedorRound = NULL;
 
     while (!WindowShouldClose())
@@ -169,126 +192,223 @@ int executarJogo(void)
         switch (estado)
         {
         case ESTADO_MENU:
+
             if (IsKeyPressed(KEY_ENTER))
                 estado = ESTADO_SELECAO;
+
             break;
 
         case ESTADO_SELECAO:
+
             if (IsKeyPressed(KEY_D) && selecaoJ1 < TOTAL_PERSONAGENS - 1)
                 selecaoJ1++;
+
             if (IsKeyPressed(KEY_A) && selecaoJ1 > 0)
                 selecaoJ1--;
+
             if (IsKeyPressed(KEY_ENTER))
                 confirmouJ1 = 1;
 
             if (IsKeyPressed(KEY_RIGHT) && selecaoJ2 < TOTAL_PERSONAGENS - 1)
                 selecaoJ2++;
+
             if (IsKeyPressed(KEY_LEFT) && selecaoJ2 > 0)
                 selecaoJ2--;
+
             if (IsKeyPressed(KEY_KP_1))
                 confirmouJ2 = 1;
 
             if (IsKeyPressed(KEY_E) && cenarioAtual < TOTAL_CENARIOS - 1)
                 cenarioAtual++;
+
             if (IsKeyPressed(KEY_Q) && cenarioAtual > 0)
                 cenarioAtual--;
 
             if (confirmouJ1 && confirmouJ2)
             {
-                iniciarPartida(&jogador1, &jogador2, statsRound, selecaoJ1, selecaoJ2,
-                               &roundAtual, &ticksRestantesRound);
+                iniciarPartida(
+                    &jogador1,
+                    &jogador2,
+                    statsRound,
+                    selecaoJ1,
+                    selecaoJ2,
+                    &roundAtual,
+                    &ticksRestantesRound);
+
                 confirmouJ1 = 0;
                 confirmouJ2 = 0;
+
                 estado = ESTADO_COMBATE;
             }
+
             break;
 
         case ESTADO_COMBATE:
+
             if (ticksRestantesRound > 0)
                 ticksRestantesRound--;
 
             updatePlayer(&jogador1, &jogador2, CONTROLES_J1);
             updatePlayer(&jogador2, &jogador1, CONTROLES_J2);
-            processarFilaAtaques(&jogador1, &jogador2, statsRound, tickAtual);
+
+            processarFilaAtaques(
+                &jogador1,
+                &jogador2,
+                statsRound,
+                (int)tickAtual);
 
             {
                 int resultado = verificarVencedor(&jogador1, &jogador2);
+
                 if (resultado == 0 && ticksRestantesRound == 0)
                     resultado = compararHpPercentual(&jogador1, &jogador2);
 
                 if (resultado != 0)
                 {
-                    finalizarRound(resultado, &jogador1, &jogador2, &vencedorRound, statsRound);
+                    finalizarRound(
+                        resultado,
+                        &jogador1,
+                        &jogador2,
+                        &vencedorRound,
+                        statsRound);
+
                     ticksFimRound = KNOCKDOWN_DISPLAY_TICKS;
+
                     estado = ESTADO_FIM_ROUND;
                 }
                 else if (ticksRestantesRound == 0)
                 {
                     vencedorRound = NULL;
+
                     ordenarEstatisticas(statsRound, 2);
+
                     estado = ESTADO_RESULTADO_ROUND;
                 }
             }
+
             break;
 
         case ESTADO_FIM_ROUND:
+
             jogador1.stateTicks++;
             jogador2.stateTicks++;
+
             if (ticksFimRound > 0)
                 ticksFimRound--;
             else
                 estado = ESTADO_RESULTADO_ROUND;
+
             break;
 
         case ESTADO_RESULTADO_ROUND:
+
             if (IsKeyPressed(KEY_ENTER))
             {
-                if (jogador1.roundsVencidos >= 2 || jogador2.roundsVencidos >= 2)
+                if (jogador1.roundsVencidos >= 2 ||
+                    jogador2.roundsVencidos >= 2)
                 {
                     estado = ESTADO_VITORIA;
                 }
                 else
                 {
-                    iniciarProximoRound(&jogador1, &jogador2, statsRound, &roundAtual, &ticksRestantesRound);
+                    iniciarProximoRound(
+                        &jogador1,
+                        &jogador2,
+                        statsRound,
+                        &roundAtual,
+                        &ticksRestantesRound);
+
                     estado = ESTADO_COMBATE;
                 }
             }
+
             break;
 
         case ESTADO_VITORIA:
+
             if (IsKeyPressed(KEY_ENTER))
             {
                 selecaoJ1 = JOAO_CAMPOS;
                 selecaoJ2 = GRAFITE;
+
                 cenarioAtual = CENARIO_MARCO_ZERO;
+
+                roundAtual = 1;
+
+                vencedorRound = NULL;
+
                 estado = ESTADO_SELECAO;
             }
+
             break;
         }
 
         BeginDrawing();
+
         ClearBackground(BLACK);
 
         switch (estado)
         {
         case ESTADO_MENU:
-            desenharMenuPrincipal(bgMenu);
+
+            DrawText("PRESSIONE ENTER", 420, 300, 40, WHITE);
+
             break;
+
         case ESTADO_SELECAO:
-            desenharSelecaoPersonagem(selecaoJ1, selecaoJ2, cenarioAtual);
+
+            desenharSelecaoPersonagem(
+                selecaoJ1,
+                selecaoJ2,
+                cenarioAtual);
+
             break;
+
         case ESTADO_COMBATE:
         case ESTADO_FIM_ROUND:
-            desenharCenario(selecionarCenario(cenarioAtual));
-            renderPlayer(&jogador1, getFighterAssets(selecaoJ1), RED, "J1");
-            renderPlayer(&jogador2, getFighterAssets(selecaoJ2), BLUE, "J2");
-            desenharHUD(&jogador1, &jogador2, roundAtual, (ticksRestantesRound + FPS_ALVO - 1) / FPS_ALVO);
+
+            desenharCenario(
+                selecionarCenario(cenarioAtual));
+
+            if (getFighterAssets(selecaoJ1) != NULL)
+            {
+                renderPlayer(
+                    &jogador1,
+                    getFighterAssets(selecaoJ1),
+                    RED,
+                    "J1");
+            }
+
+            if (getFighterAssets(selecaoJ2) != NULL)
+            {
+                renderPlayer(
+                    &jogador2,
+                    getFighterAssets(selecaoJ2),
+                    BLUE,
+                    "J2");
+            }
+
+            desenharHUD(
+                &jogador1,
+                &jogador2,
+                roundAtual,
+                (ticksRestantesRound + FPS_ALVO - 1) / FPS_ALVO);
+
             break;
+
         case ESTADO_RESULTADO_ROUND:
-            desenharResultadoRound(vencedorRound, statsRound, 2);
+
+            desenharResultadoRound(
+                vencedorRound,
+                statsRound,
+                2);
+
             break;
+
         case ESTADO_VITORIA:
+
             desenharTelaVitoria(vencedorRound);
+
             break;
         }
 
@@ -296,7 +416,10 @@ int executarJogo(void)
     }
 
     descarregarAssetsLutadores();
+
     descarregarCenarios();
+
     CloseWindow();
+
     return 0;
 }
