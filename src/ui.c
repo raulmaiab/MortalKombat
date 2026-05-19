@@ -244,6 +244,8 @@ void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual) {
     DrawText(">", SELECT_J2_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J2_NOME_Y, 32, RED);
 
     DrawText(TextFormat("Cenario: %s", cenarios[cenarioAtual]), 500, 650, 20, ORANGE);
+    DrawText("J1: A/D escolhe, ENTER confirma | J2: SETAS escolhem, SHIFT-DIR ou L confirma", 270, 680, 18, LIGHTGRAY);
+    DrawText("Luta: J1 WASD + F/G/H/T | J2 SETAS + SHIFT-DIR/J/K/L", 360, 704, 16, LIGHTGRAY);
 }
 
 /*

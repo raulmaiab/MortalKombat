@@ -34,11 +34,21 @@ typedef enum
 #define POS_INICIAL_J2 (LARGURA_TELA - 260)
 
 static const PlayerControls CONTROLES_J1 = {
-    KEY_A, KEY_D, KEY_W, KEY_E, 0, KEY_S, KEY_G, KEY_H, KEY_Y
+    KEY_A, KEY_D, KEY_W,
+    KEY_F, KEY_E,
+    KEY_S,
+    KEY_G, 0,
+    KEY_H, 0,
+    KEY_T, KEY_Y
 };
 
 static const PlayerControls CONTROLES_J2 = {
-    KEY_LEFT, KEY_RIGHT, KEY_UP, KEY_INSERT, KEY_KP_0, KEY_DOWN, KEY_KP_1, KEY_KP_2, KEY_KP_3
+    KEY_LEFT, KEY_RIGHT, KEY_UP,
+    KEY_RIGHT_SHIFT, KEY_INSERT,
+    KEY_DOWN,
+    KEY_J, KEY_KP_1,
+    KEY_K, KEY_KP_2,
+    KEY_L, KEY_KP_3
 };
 
 static void prepararStats(Estatistica *statsRound, const Jogador *jogador1, const Jogador *jogador2)
@@ -185,7 +195,7 @@ int executarJogo(void)
                 selecaoJ2++;
             if (IsKeyPressed(KEY_LEFT) && selecaoJ2 > 0)
                 selecaoJ2--;
-            if (IsKeyPressed(KEY_L))
+            if (IsKeyPressed(KEY_L) || IsKeyPressed(KEY_RIGHT_SHIFT))
                 confirmouJ2 = 1;
 
             if (IsKeyPressed(KEY_E) && cenarioAtual < TOTAL_CENARIOS - 1)

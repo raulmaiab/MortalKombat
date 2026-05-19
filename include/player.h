@@ -26,8 +26,11 @@ typedef struct
     int defesaAlternativa;
     int esquiva;
     int ataqueLeve;
+    int ataqueLeveAlternativo;
     int ataqueMedio;
+    int ataqueMedioAlternativo;
     int ataqueEspecial;
+    int ataqueEspecialAlternativo;
 } PlayerControls;
 
 void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles);

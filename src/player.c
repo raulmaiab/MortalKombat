@@ -114,6 +114,12 @@ static Color corDoEstado(const Jogador *jogador, Color corBase)
     }
 }
 
+static int keyPressedAlternativo(int teclaPrincipal, int teclaAlternativa)
+{
+    return IsKeyPressed(teclaPrincipal) ||
+           (teclaAlternativa != 0 && IsKeyPressed(teclaAlternativa));
+}
+
 void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
 {
     int moveu = 0;
@@ -135,19 +141,19 @@ void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
     {
         if (!jogador->defendendo)
         {
-            if (IsKeyPressed(controles.ataqueLeve))
+            if (keyPressedAlternativo(controles.ataqueLeve, controles.ataqueLeveAlternativo))
             {
                 enfileirarPassinho(&jogador->fila, jogador->agachado ? converterAtaqueAgachado(ATAQUE_LEVE) : ATAQUE_LEVE);
                 jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
                 jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
             }
-            if (IsKeyPressed(controles.ataqueMedio))
+            if (keyPressedAlternativo(controles.ataqueMedio, controles.ataqueMedioAlternativo))
             {
                 enfileirarPassinho(&jogador->fila, jogador->agachado ? converterAtaqueAgachado(ATAQUE_MEDIO) : ATAQUE_MEDIO);
                 jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
                 jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
             }
-            if (IsKeyPressed(controles.ataqueEspecial))
+            if (keyPressedAlternativo(controles.ataqueEspecial, controles.ataqueEspecialAlternativo))
             {
                 enfileirarPassinho(&jogador->fila, jogador->agachado ? converterAtaqueAgachado(ATAQUE_ESPECIAL) : ATAQUE_ESPECIAL);
                 jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
