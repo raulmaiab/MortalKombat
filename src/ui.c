@@ -30,6 +30,22 @@ Texture2D bgPlayerSelect;
 #define SELECT_J2_NOME_Y 490
 #define SELECT_NOME_LARGURA 220
 
+#define COR_AMARELO_ESCURO (Color){150, 132, 0, 255}
+#define COR_LARANJA_ESCURO (Color){150, 82, 0, 255}
+#define COR_CINZA_ESCURO   (Color){105, 105, 105, 255}
+
+static void desenharTextoComSombra(const char *texto, int x, int y, int tamanho, Color cor)
+{
+    DrawText(texto, x + 3, y + 3, tamanho, Fade(BLACK, 0.9f));
+    DrawText(texto, x, y, tamanho, cor);
+}
+
+static void desenharTextoCentralizadoComSombra(const char *texto, int centroX, int y, int tamanho, Color cor)
+{
+    int largura = MeasureText(texto, tamanho);
+    desenharTextoComSombra(texto, centroX - largura / 2, y, tamanho, cor);
+}
+
 static float distanciaJogadores(Jogador *jogador1, Jogador *jogador2) {
     float dx = jogador1->posX - jogador2->posX;
     float dy = jogador1->posY - jogador2->posY;
@@ -148,11 +164,14 @@ void desenharMenuPrincipal(Texture2D background) {
         (Rectangle){ 0, 0, LARGURA_TELA, ALTURA_TELA },
         (Vector2){ 0, 0 }, 0.0f, WHITE
     );
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(BLACK, 0.5f));
+
     int cx = LARGURA_TELA / 2;
-    DrawText("BATALHA DO PASSINHO", cx - MeasureText("BATALHA DO PASSINHO", 48) / 2, 150, 48, RED);
-    DrawText("Na Vibe do Brega Funk Recifense", cx - MeasureText("Na Vibe do Brega Funk Recifense", 22) / 2, 220, 22, YELLOW);
-    DrawText("Pressione ENTER para jogar", cx - MeasureText("Pressione ENTER para jogar", 24) / 2, 380, 24, WHITE);
-    DrawText("ESC para sair", cx - MeasureText("ESC para sair", 20) / 2, 430, 20, GRAY);
+    DrawRectangleRounded((Rectangle){310, 125, 660, 335}, 0.05f, 10, Fade(BLACK, 0.35f));
+    desenharTextoCentralizadoComSombra("BATALHA DO PASSINHO", cx, 150, 48, RED);
+    desenharTextoCentralizadoComSombra("Na Vibe do Brega Funk Recifense", cx, 220, 22, COR_AMARELO_ESCURO);
+    desenharTextoCentralizadoComSombra("Pressione ENTER para jogar", cx, 380, 24, WHITE);
+    desenharTextoCentralizadoComSombra("ESC para sair", cx, 430, 20, COR_CINZA_ESCURO);
 }
 
 static void desenharRetratoSelecao(const FighterAssets *assets, Rectangle destino, Color corFallback, const char *rotulo)
@@ -193,17 +212,17 @@ static void desenharNomeCentralizado(const char *nome, int x, int y, int largura
         textoLargura = MeasureText(nome, fonte);
     }
 
-    DrawText(nome, x + (largura - textoLargura) / 2, y, fonte, cor);
+    desenharTextoComSombra(nome, x + (largura - textoLargura) / 2, y, fonte, cor);
 }
 
 static void desenharAbaControles(void)
 {
     Rectangle aba = {1020, 30, 190, 34};
 
-    DrawRectangleRounded(aba, 0.18f, 8, Fade(BLACK, 0.62f));
-    DrawRectangleRoundedLines(aba, 0.18f, 8, Fade(WHITE, 0.5f));
-    DrawText("I", 1042, 38, 18, YELLOW);
-    DrawText("Controles", 1070, 38, 18, WHITE);
+    DrawRectangleRounded(aba, 0.18f, 8, Fade(BLACK, 0.82f));
+    DrawRectangleRoundedLines(aba, 0.18f, 8, Fade(COR_CINZA_ESCURO, 0.75f));
+    desenharTextoComSombra("I", 1042, 38, 18, COR_AMARELO_ESCURO);
+    desenharTextoComSombra("Controles", 1070, 38, 18, WHITE);
 }
 
 static void desenharPainelControles(void)
@@ -211,31 +230,31 @@ static void desenharPainelControles(void)
     Rectangle painel = {260, 105, 760, 495};
     int y = 170;
 
-    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(BLACK, 0.45f));
-    DrawRectangleRounded(painel, 0.04f, 10, Fade((Color){18, 18, 22, 255}, 0.95f));
-    DrawRectangleRoundedLines(painel, 0.04f, 10, Fade(YELLOW, 0.8f));
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(BLACK, 0.68f));
+    DrawRectangleRounded(painel, 0.04f, 10, Fade((Color){8, 8, 12, 255}, 0.98f));
+    DrawRectangleRoundedLines(painel, 0.04f, 10, Fade(COR_AMARELO_ESCURO, 0.7f));
 
-    DrawText("CONTROLES", 535, 130, 28, YELLOW);
-    DrawText("Pressione I para fechar", 548, 560, 18, LIGHTGRAY);
+    desenharTextoComSombra("CONTROLES", 535, 130, 28, COR_AMARELO_ESCURO);
+    desenharTextoComSombra("Pressione I para fechar", 548, 560, 18, WHITE);
 
-    DrawText("JOGADOR 1", 330, y, 22, BLUE);
-    DrawText("Mover: A / D", 330, y + 40, 20, WHITE);
-    DrawText("Pular: W", 330, y + 72, 20, WHITE);
-    DrawText("Agachar: S", 330, y + 104, 20, WHITE);
-    DrawText("Defender: F ou E", 330, y + 136, 20, WHITE);
-    DrawText("Ataques: G / H / T", 330, y + 168, 20, WHITE);
-    DrawText("Confirmar: ENTER", 330, y + 200, 20, WHITE);
+    desenharTextoComSombra("JOGADOR 1", 330, y, 22, BLUE);
+    desenharTextoComSombra("Mover: A / D", 330, y + 40, 20, WHITE);
+    desenharTextoComSombra("Pular: W", 330, y + 72, 20, WHITE);
+    desenharTextoComSombra("Agachar: S", 330, y + 104, 20, WHITE);
+    desenharTextoComSombra("Defender: F ou E", 330, y + 136, 20, WHITE);
+    desenharTextoComSombra("Ataques: G / H / T", 330, y + 168, 20, WHITE);
+    desenharTextoComSombra("Confirmar: ENTER", 330, y + 200, 20, WHITE);
 
-    DrawText("JOGADOR 2", 705, y, 22, RED);
-    DrawText("Mover: SETAS", 705, y + 40, 20, WHITE);
-    DrawText("Pular: CIMA", 705, y + 72, 20, WHITE);
-    DrawText("Agachar: BAIXO", 705, y + 104, 20, WHITE);
-    DrawText("Defender: SHIFT DIR", 705, y + 136, 20, WHITE);
-    DrawText("Ataques: J / K / L", 705, y + 168, 20, WHITE);
-    DrawText("Confirmar: L ou SHIFT", 705, y + 200, 20, WHITE);
+    desenharTextoComSombra("JOGADOR 2", 705, y, 22, RED);
+    desenharTextoComSombra("Mover: SETAS", 705, y + 40, 20, WHITE);
+    desenharTextoComSombra("Pular: CIMA", 705, y + 72, 20, WHITE);
+    desenharTextoComSombra("Agachar: BAIXO", 705, y + 104, 20, WHITE);
+    desenharTextoComSombra("Defender: SHIFT DIR", 705, y + 136, 20, WHITE);
+    desenharTextoComSombra("Ataques: J / K / L", 705, y + 168, 20, WHITE);
+    desenharTextoComSombra("Confirmar: L ou SHIFT", 705, y + 200, 20, WHITE);
 
-    DrawText("Cenario: Q / E", 545, 470, 20, ORANGE);
-    DrawText("Alternativas J2: INSERT e KP_1 / KP_2 / KP_3", 405, 510, 18, LIGHTGRAY);
+    desenharTextoComSombra("Cenario: Q / E", 545, 470, 20, COR_LARANJA_ESCURO);
+    desenharTextoComSombra("Alternativas J2: INSERT e KP_1 / KP_2 / KP_3", 405, 510, 18, WHITE);
 }
 
 /*
@@ -264,6 +283,8 @@ void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual, i
         ClearBackground(BLACK);
     }
 
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(BLACK, 0.52f));
+
     desenharRetratoSelecao(
         assetsJ1,
         (Rectangle){SELECT_J1_RETRATO_X, SELECT_J1_RETRATO_Y, SELECT_RETRATO_LARGURA, SELECT_RETRATO_ALTURA},
@@ -280,12 +301,16 @@ void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual, i
     desenharNomeCentralizado(personagemJ1.nome, SELECT_J1_NOME_X, SELECT_J1_NOME_Y, SELECT_NOME_LARGURA, BLUE);
     desenharNomeCentralizado(personagemJ2.nome, SELECT_J2_NOME_X, SELECT_J2_NOME_Y, SELECT_NOME_LARGURA, RED);
 
-    DrawText("<", SELECT_J1_NOME_X - 25, SELECT_J1_NOME_Y, 32, BLUE);
-    DrawText(">", SELECT_J1_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J1_NOME_Y, 32, BLUE);
-    DrawText("<", SELECT_J2_NOME_X - 25, SELECT_J2_NOME_Y, 32, RED);
-    DrawText(">", SELECT_J2_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J2_NOME_Y, 32, RED);
+    desenharTextoComSombra("<", SELECT_J1_NOME_X - 25, SELECT_J1_NOME_Y, 32, BLUE);
+    desenharTextoComSombra(">", SELECT_J1_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J1_NOME_Y, 32, BLUE);
+    desenharTextoComSombra("<", SELECT_J2_NOME_X - 25, SELECT_J2_NOME_Y, 32, RED);
+    desenharTextoComSombra(">", SELECT_J2_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J2_NOME_Y, 32, RED);
 
-    DrawText(TextFormat("Cenario: %s", cenarios[cenarioAtual]), 500, 650, 20, ORANGE);
+    {
+        const char *textoCenario = TextFormat("Cenario: %s", cenarios[cenarioAtual]);
+        int larguraCenario = MeasureText(textoCenario, 20);
+        desenharTextoComSombra(textoCenario, LARGURA_TELA - larguraCenario - 70, 650, 20, WHITE);
+    }
     desenharAbaControles();
 
     if (mostrarControles)
