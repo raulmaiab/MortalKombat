@@ -7,6 +7,12 @@
 #define STUN_TICKS_PADRAO 60
 #define HITSTUN_WINDOW_TICKS 20
 #define BLOCKSTUN_TICKS 12
+#define GANHO_ENERGIA_TEMPO 1
+#define GANHO_ENERGIA_ACERTO 5
+#define GANHO_ENERGIA_DEFESA 3
+#define ENERGIA_ESPECIAL 100
+#define DANO_NORMAL_PERCENTUAL 4
+#define DANO_ESPECIAL_PERCENTUAL 40
 
 /* Combo: sequência de 3 passinhos que ativa o golpe especial */
 typedef struct
@@ -20,6 +26,7 @@ extern const int energiaConsumida[3];
 void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, Estatistica *stats, int tickAtual);
 int verificarCombo(FilaPassinhos *fila, Combo *combosPersonagem, int totalCombos);
 void atualizarEnergia(Jogador *jogador, int dano);
+void adicionarEnergia(Jogador *jogador, int quantidade);
 int verificarVencedor(Jogador *jogador1, Jogador *jogador2);
 void encerrarRound(Jogador *vencedor, Estatistica *stats);
 

@@ -1,6 +1,7 @@
 #include "player.h"
 #include "fila.h"
 #include <stddef.h>
+#include "combate.h"
 
 #define SPRITE_ALTURA 504
 #define SPRITE_LARGURA 504
@@ -27,19 +28,20 @@ static void atualizarTimers(Jogador *jogador)
         jogador->ataqueAgachadoTicks--;
 }
 
-static TipoPassinho converterAtaqueAgachado(TipoPassinho passinho)
+static int calcularCustoFila(const FilaPassinhos *fila)
 {
-    switch (passinho)
+    int custoTotal = 0;
+    int idx = fila->inicio;
+    for (int i = 0; i < fila->tamanho; i++)
     {
-    case ATAQUE_LEVE:
-        return ATAQUE_BAIXO_LEVE;
-    case ATAQUE_MEDIO:
-        return ATAQUE_BAIXO_MEDIO;
-    case ATAQUE_ESPECIAL:
-        return ATAQUE_BAIXO_ESPECIAL;
-    default:
-        return passinho;
+        TipoPassinho p = fila->elementos[idx];
+        int custo = 0;
+        if (p == ATAQUE_ESPECIAL)
+            custo = energiaConsumida[2];
+        custoTotal += custo;
+        idx = (idx + 1) % TAM_MAX_FILA;
     }
+    return custoTotal;
 }
 
 static void atualizarFisica(Jogador *jogador)
@@ -141,23 +143,27 @@ void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
     {
         if (!jogador->defendendo)
         {
-            if (keyPressedAlternativo(controles.ataqueLeve, controles.ataqueLeveAlternativo))
+            if (keyPressedAlternativo(controles.ataqueNormal, controles.ataqueNormalAlternativo))
             {
-                enfileirarPassinho(&jogador->fila, jogador->agachado ? converterAtaqueAgachado(ATAQUE_LEVE) : ATAQUE_LEVE);
-                jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
-                jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
-            }
-            if (keyPressedAlternativo(controles.ataqueMedio, controles.ataqueMedioAlternativo))
-            {
-                enfileirarPassinho(&jogador->fila, jogador->agachado ? converterAtaqueAgachado(ATAQUE_MEDIO) : ATAQUE_MEDIO);
-                jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
-                jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
+                int custo = jogador->agachado ? energiaConsumida[1] : energiaConsumida[0];
+                int energiaDisponivel = jogador->energia - calcularCustoFila(&jogador->fila);
+                if (energiaDisponivel >= custo)
+                {
+                    enfileirarPassinho(&jogador->fila, jogador->agachado ? ATAQUE_BAIXO : ATAQUE_NORMAL);
+                    jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
+                    jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
+                }
             }
             if (keyPressedAlternativo(controles.ataqueEspecial, controles.ataqueEspecialAlternativo))
             {
-                enfileirarPassinho(&jogador->fila, jogador->agachado ? converterAtaqueAgachado(ATAQUE_ESPECIAL) : ATAQUE_ESPECIAL);
-                jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
-                jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
+                int custo = energiaConsumida[2];
+                int energiaDisponivel = jogador->energia - calcularCustoFila(&jogador->fila);
+                if (energiaDisponivel >= custo)
+                {
+                    enfileirarPassinho(&jogador->fila, ATAQUE_ESPECIAL);
+                    jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
+                    jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
+                }
             }
         }
 

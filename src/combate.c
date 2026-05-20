@@ -2,7 +2,7 @@
 #include <math.h>
 #include <string.h>
 
-const int energiaConsumida[3] = {10, 25, 80};
+const int energiaConsumida[3] = {0, 0, ENERGIA_ESPECIAL};
 
 static float calcularDistancia(const Jogador *a, const Jogador *b)
 {
@@ -21,17 +21,14 @@ static void aplicarStun(Jogador *alvo, int tickAtual)
 
 static int ataqueBaixo(TipoPassinho passinho)
 {
-    return passinho == ATAQUE_BAIXO_LEVE ||
-           passinho == ATAQUE_BAIXO_MEDIO ||
-           passinho == ATAQUE_BAIXO_ESPECIAL;
+    return passinho == ATAQUE_BAIXO;
 }
 
 static int ataqueValido(TipoPassinho passinho)
 {
-    return passinho == ATAQUE_LEVE ||
-           passinho == ATAQUE_MEDIO ||
-           passinho == ATAQUE_ESPECIAL ||
-           ataqueBaixo(passinho);
+    return passinho == ATAQUE_NORMAL ||
+           passinho == ATAQUE_BAIXO ||
+           passinho == ATAQUE_ESPECIAL;
 }
 
 static int defesaDeFrente(const Jogador *defensor, const Jogador *atacante)
@@ -39,6 +36,14 @@ static int defesaDeFrente(const Jogador *defensor, const Jogador *atacante)
     if (atacante->posX > defensor->posX)
         return defensor->olhandoDireita;
     return !defensor->olhandoDireita;
+}
+
+static int calcularDanoPercentual(const Jogador *alvo, int percentual)
+{
+    int dano = alvo->personagem.hpMaximo * percentual / 100;
+    if (dano < 1)
+        dano = 1;
+    return dano;
 }
 
 /*
@@ -55,20 +60,17 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
 
     switch (passinho)
     {
-    case ATAQUE_LEVE:
-    case ATAQUE_BAIXO_LEVE:
+    case ATAQUE_NORMAL:
         custo = energiaConsumida[0];
-        dano = atacante->personagem.danoLeve;
+        dano = calcularDanoPercentual(alvo, DANO_NORMAL_PERCENTUAL);
         break;
-    case ATAQUE_MEDIO:
-    case ATAQUE_BAIXO_MEDIO:
+    case ATAQUE_BAIXO:
         custo = energiaConsumida[1];
-        dano = atacante->personagem.danomedio;
+        dano = calcularDanoPercentual(alvo, DANO_NORMAL_PERCENTUAL);
         break;
     case ATAQUE_ESPECIAL:
-    case ATAQUE_BAIXO_ESPECIAL:
         custo = energiaConsumida[2];
-        dano = atacante->personagem.danoEspecial;
+        dano = calcularDanoPercentual(alvo, DANO_ESPECIAL_PERCENTUAL);
         break;
     default:
         break;
@@ -112,6 +114,7 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
 
     if (!ataqueBaixo(passinho) && alvo->defendendo && alvo->noChao && defesaDeFrente(alvo, atacante))
     {
+        adicionarEnergia(atacante, GANHO_ENERGIA_DEFESA);
         alvo->stunTicks = BLOCKSTUN_TICKS;
         limparFila(&alvo->fila);
         alvo->ultimoGolpeTick = tickAtual;
@@ -122,7 +125,7 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
     if (alvo->hp < 0)
         alvo->hp = 0;
 
-    atualizarEnergia(atacante, dano);
+    adicionarEnergia(atacante, GANHO_ENERGIA_ACERTO);
     stats[0].danoTotal += dano;
 
     if (tickAtual - alvo->ultimoGolpeTick < HITSTUN_WINDOW_TICKS)
@@ -178,6 +181,13 @@ int verificarCombo(FilaPassinhos *fila, Combo *combosPersonagem, int totalCombos
 void atualizarEnergia(Jogador *jogador, int dano)
 {
     jogador->energia += dano / 2;
+    if (jogador->energia > MAX_ENERGIA)
+        jogador->energia = MAX_ENERGIA;
+}
+
+void adicionarEnergia(Jogador *jogador, int quantidade)
+{
+    jogador->energia += quantidade;
     if (jogador->energia > MAX_ENERGIA)
         jogador->energia = MAX_ENERGIA;
 }

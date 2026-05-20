@@ -2,6 +2,7 @@
 #include "combate.h"
 #include "ordenacao.h"
 #include "raylib.h"
+#include "selecao_personagens.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -18,17 +19,34 @@ Texture2D bgJaqueira;
 Texture2D bgMenu;
 Texture2D bgPlayerSelect;
 
-#define SELECT_J1_RETRATO_X 228
-#define SELECT_J1_RETRATO_Y 210
-#define SELECT_J2_RETRATO_X 848
-#define SELECT_J2_RETRATO_Y 210
-#define SELECT_RETRATO_LARGURA 240
-#define SELECT_RETRATO_ALTURA 200
-#define SELECT_J1_NOME_X 240
-#define SELECT_J1_NOME_Y 490
-#define SELECT_J2_NOME_X 860
-#define SELECT_J2_NOME_Y 490
-#define SELECT_NOME_LARGURA 220
+#define SELECT_SLOTS_POR_JOGADOR 3
+#define SELECT_RETRATO_LARGURA 292
+#define SELECT_RETRATO_ALTURA 122
+#define SELECT_NOME_LARGURA 270
+
+static const Rectangle SELECT_SLOTS_J1[SELECT_SLOTS_POR_JOGADOR] = {
+    {67, 88, SELECT_RETRATO_LARGURA, SELECT_RETRATO_ALTURA},
+    {67, 309, SELECT_RETRATO_LARGURA, SELECT_RETRATO_ALTURA},
+    {67, 525, SELECT_RETRATO_LARGURA, SELECT_RETRATO_ALTURA}
+};
+
+static const Rectangle SELECT_SLOTS_J2[SELECT_SLOTS_POR_JOGADOR] = {
+    {960, 88, SELECT_RETRATO_LARGURA, SELECT_RETRATO_ALTURA},
+    {960, 309, SELECT_RETRATO_LARGURA, SELECT_RETRATO_ALTURA},
+    {960, 525, SELECT_RETRATO_LARGURA, SELECT_RETRATO_ALTURA}
+};
+
+static const Vector2 SELECT_NOMES_J1[SELECT_SLOTS_POR_JOGADOR] = {
+    {73, 234},
+    {73, 453},
+    {73, 670}
+};
+
+static const Vector2 SELECT_NOMES_J2[SELECT_SLOTS_POR_JOGADOR] = {
+    {965, 234},
+    {965, 453},
+    {965, 670}
+};
 
 #define COR_AMARELO_ESCURO (Color){150, 132, 0, 255}
 #define COR_LARANJA_ESCURO (Color){150, 82, 0, 255}
@@ -46,7 +64,7 @@ static void desenharTextoCentralizadoComSombra(const char *texto, int centroX, i
     desenharTextoComSombra(texto, centroX - largura / 2, y, tamanho, cor);
 }
 
-static float distanciaJogadores(Jogador *jogador1, Jogador *jogador2) {
+static float distanciaJogadores(const Jogador *jogador1, const Jogador *jogador2) {
     float dx = jogador1->posX - jogador2->posX;
     float dy = jogador1->posY - jogador2->posY;
     return sqrtf(dx * dx + dy * dy);
@@ -62,7 +80,7 @@ void carregarCenarios() {
     bgBoaViagem = LoadTexture("assets/backgrounds/boa_viagem.png");
     bgJaqueira  = LoadTexture("assets/backgrounds/jaqueira.png");
     bgMenu      = LoadTexture("assets/backgrounds/menu.png");
-    bgPlayerSelect = LoadTexture("assets/backgrounds/player_select.png");
+    bgPlayerSelect = LoadTexture("assets/backgrounds/player_select3.png");
 }
 
 /* Chama isso no fechamento do jogo, antes do CloseWindow() */
@@ -75,40 +93,85 @@ void descarregarCenarios() {
 }
 
 
-void desenharHUD(Jogador *jogador1, Jogador *jogador2, int roundAtual, int segundosRestantes) {
-    int larguraBarra = 400;
-    int alturaBarra  = 25;
-    int margem       = 20;
+static void desenharPortraitPequeno(int indicePersonagem, Rectangle destino)
+{
+    const FighterAssets *assets = getFighterAssets(indicePersonagem);
+    Texture2D retrato = getPortraitForFighter(assets);
 
-    /* -- HP Jogador 1 (esquerda) -- */
-    DrawRectangle(margem, margem, larguraBarra, alturaBarra, DARKGRAY);
-    int hpJ1 = (jogador1->hp * larguraBarra) / jogador1->personagem.hpMaximo;
-    DrawRectangle(margem, margem, hpJ1, alturaBarra, COR_HP_J1);
-    DrawText(jogador1->personagem.nome, margem, margem + alturaBarra + 5, 18, WHITE);
+    if (retrato.id == 0)
+    {
+        DrawRectangleRec(destino, DARKGRAY);
+        return;
+    }
 
-    /* -- HP Jogador 2 (direita) -- */
-    int xJ2 = LARGURA_TELA - margem - larguraBarra;
-    DrawRectangle(xJ2, margem, larguraBarra, alturaBarra, DARKGRAY);
-    int hpJ2 = (jogador2->hp * larguraBarra) / jogador2->personagem.hpMaximo;
-    DrawRectangle(xJ2 + (larguraBarra - hpJ2), margem, hpJ2, alturaBarra, COR_HP_J2);
-    DrawText(jogador2->personagem.nome, xJ2, margem + alturaBarra + 5, 18, WHITE);
+    DrawTexturePro(
+        retrato,
+        (Rectangle){0, 0, (float)retrato.width, (float)retrato.height},
+        destino,
+        (Vector2){0, 0},
+        0.0f,
+        WHITE
+    );
+}
 
-    /* -- Energia Jogador 1 -- */
-    int larguraEnergia = 200;
-    DrawRectangle(margem, margem + alturaBarra + 30, larguraEnergia, 15, DARKGRAY);
-    int energiaJ1 = (jogador1->energia * larguraEnergia) / MAX_ENERGIA;
-    DrawRectangle(margem, margem + alturaBarra + 30, energiaJ1, 15, COR_ENERGIA);
-    DrawText(TextFormat("Energia: %d/%d", jogador1->energia, MAX_ENERGIA),
-             margem, margem + alturaBarra + 48, 16, WHITE);
+static void desenharBarraPersonagemEquipe(const NoPersonagem *no, int x, int y, int largura,
+                                          int altura, Color cor, int alinhadoDireita, int ativo)
+{
+    int portrait = ativo ? 34 : 26;
+    int barraX = alinhadoDireita ? x : x + portrait + 6;
+    int retratoX = alinhadoDireita ? x + largura - portrait : x;
+    int larguraBarra = largura - portrait - 6;
+    int hp = no->jogador.hp * larguraBarra / no->jogador.personagem.hpMaximo;
+    Color corHp = no->vivo ? cor : GRAY;
 
-    /* -- Energia Jogador 2 -- */
-    DrawRectangle(xJ2 + larguraBarra - larguraEnergia, margem + alturaBarra + 30, larguraEnergia, 15, DARKGRAY);
-    int energiaJ2 = (jogador2->energia * larguraEnergia) / MAX_ENERGIA;
-    DrawRectangle(xJ2 + larguraBarra - energiaJ2, margem + alturaBarra + 30, energiaJ2, 15, COR_ENERGIA);
-    DrawText(TextFormat("Energia: %d/%d", jogador2->energia, MAX_ENERGIA),
-             xJ2 + larguraBarra - larguraEnergia, margem + alturaBarra + 48, 16, WHITE);
+    desenharPortraitPequeno(no->indicePersonagem, (Rectangle){retratoX, y, portrait, altura});
+    DrawRectangle(barraX, y, larguraBarra, altura, DARKGRAY);
 
-    /* -- Round atual no centro -- */
+    if (alinhadoDireita)
+        DrawRectangle(barraX + (larguraBarra - hp), y, hp, altura, corHp);
+    else
+        DrawRectangle(barraX, y, hp, altura, corHp);
+
+    DrawRectangleLines(barraX, y, larguraBarra, altura, ativo ? WHITE : LIGHTGRAY);
+    if (ativo)
+        DrawText(no->jogador.personagem.nome, barraX, y + altura + 3, 16, WHITE);
+}
+
+static void desenharHUDJogador(const EquipeJogador *equipe, int x, int y, Color cor, int alinhadoDireita)
+{
+    int reservaY = y;
+    int reservasDesenhadas = 0;
+
+    for (int i = 0; i < TAM_EQUIPE; i++)
+    {
+        const NoPersonagem *no = &equipe->membros[i];
+        if (&equipe->membros[i] == equipe->inicio)
+            continue;
+
+        desenharBarraPersonagemEquipe(no, x, reservaY + reservasDesenhadas * 30, 300, 22, cor, alinhadoDireita, 0);
+        reservasDesenhadas++;
+    }
+
+    if (equipe->inicio != NULL)
+    {
+        desenharBarraPersonagemEquipe(equipe->inicio, x, y + 64, 400, 28, cor, alinhadoDireita, 1);
+        DrawRectangle(x + (alinhadoDireita ? 120 : 0), y + 112, 200, 15, DARKGRAY);
+        int energia = equipe->inicio->jogador.energia * 200 / MAX_ENERGIA;
+        if (alinhadoDireita)
+            DrawRectangle(x + 120 + (200 - energia), y + 112, energia, 15, COR_ENERGIA);
+        else
+            DrawRectangle(x, y + 112, energia, 15, COR_ENERGIA);
+        DrawText(TextFormat("Energia: %d%%", equipe->inicio->jogador.energia),
+                 x + (alinhadoDireita ? 120 : 0), y + 130, 16, WHITE);
+    }
+}
+
+void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2, int roundAtual, int segundosRestantes) {
+    int margem = 20;
+
+    desenharHUDJogador(equipe1, margem, margem, COR_HP_J1, 0);
+    desenharHUDJogador(equipe2, LARGURA_TELA - margem - 400, margem, COR_HP_J2, 1);
+
     char textoRound[20];
     sprintf(textoRound, "ROUND %d", roundAtual);
     int larguraTexto = MeasureText(textoRound, 28);
@@ -122,21 +185,24 @@ void desenharHUD(Jogador *jogador1, Jogador *jogador2, int roundAtual, int segun
 
     /* -- Placar de rounds -- */
     char placar[20];
-    sprintf(placar, "%d  x  %d", jogador1->roundsVencidos, jogador2->roundsVencidos);
+    sprintf(placar, "%d  x  %d", equipe1->roundsVencidos, equipe2->roundsVencidos);
     int larguraPlacar = MeasureText(placar, 24);
     DrawText(placar, LARGURA_TELA / 2 - larguraPlacar / 2, margem + 62, 24, YELLOW);
 
-    float distancia = distanciaJogadores(jogador1, jogador2);
+    if (equipe1->inicio == NULL || equipe2->inicio == NULL)
+        return;
+
+    float distancia = distanciaJogadores(&equipe1->inicio->jogador, &equipe2->inicio->jogador);
     const char *alcance = distancia <= DISTANCIA_MAXIMA_ATAQUE ? "NO ALCANCE" : "LONGE";
     Color corAlcance = distancia <= DISTANCIA_MAXIMA_ATAQUE ? GREEN : RED;
     const char *textoAlcance = TextFormat("Distancia: %.0f px | %s", distancia, alcance);
     DrawText(textoAlcance, LARGURA_TELA / 2 - MeasureText(textoAlcance, 18) / 2, margem + 92, 18, corAlcance);
 
-    DrawText(TextFormat("Fila: %d | Stun: %d | Esq: %d", jogador1->fila.tamanho, jogador1->stunTicks, jogador1->esquivaCooldown),
-             margem, margem + alturaBarra + 68, 16, jogador1->stunTicks > 0 ? ORANGE : LIGHTGRAY);
-    DrawText(TextFormat("Fila: %d | Stun: %d | Esq: %d", jogador2->fila.tamanho, jogador2->stunTicks, jogador2->esquivaCooldown),
-             xJ2 + larguraBarra - larguraEnergia, margem + alturaBarra + 68, 16,
-             jogador2->stunTicks > 0 ? ORANGE : LIGHTGRAY);
+    DrawText(TextFormat("Fila: %d | Stun: %d", equipe1->tamanho, equipe1->inicio->jogador.stunTicks),
+             margem, margem + 150, 16, equipe1->inicio->jogador.stunTicks > 0 ? ORANGE : LIGHTGRAY);
+    DrawText(TextFormat("Fila: %d | Stun: %d", equipe2->tamanho, equipe2->inicio->jogador.stunTicks),
+             LARGURA_TELA - margem - 190, margem + 150, 16,
+             equipe2->inicio->jogador.stunTicks > 0 ? ORANGE : LIGHTGRAY);
 }
 
 /*
@@ -215,14 +281,41 @@ static void desenharNomeCentralizado(const char *nome, int x, int y, int largura
     desenharTextoComSombra(nome, x + (largura - textoLargura) / 2, y, fonte, cor);
 }
 
+static void desenharSlotSelecao(int indicePersonagem, Rectangle slot, Vector2 posNome,
+                                Color cor, const char *rotulo, int ativo, int bloqueado)
+{
+    Personagem personagem = getPersonagem(indicePersonagem);
+    const FighterAssets *assets = getFighterAssets(indicePersonagem);
+
+    desenharRetratoSelecao(assets, slot, cor, rotulo);
+    desenharNomeCentralizado(personagem.nome, (int)posNome.x, (int)posNome.y, SELECT_NOME_LARGURA, cor);
+
+    if (ativo && !bloqueado)
+        DrawRectangleLinesEx(slot, 4, WHITE);
+    else if (bloqueado)
+        DrawRectangleLinesEx(slot, 3, Fade(GRAY, 0.75f));
+}
+
+static void desenharSlotsSelecao(const int selecoes[],
+                                 const Rectangle *slots, const Vector2 *nomes,
+                                 int slotAtual, int confirmouTudo,
+                                 Color cor, const char *rotulo)
+{
+    for (int i = 0; i < SELECT_SLOTS_POR_JOGADOR; i++)
+    {
+        desenharSlotSelecao(selecoes[i], slots[i], nomes[i], cor, rotulo,
+                            i == slotAtual, confirmouTudo);
+    }
+}
+
 static void desenharAbaControles(void)
 {
-    Rectangle aba = {1020, 30, 190, 34};
+    Rectangle aba = {545, 675, 190, 34};
 
     DrawRectangleRounded(aba, 0.18f, 8, Fade(BLACK, 0.82f));
     DrawRectangleRoundedLines(aba, 0.18f, 8, Fade(COR_CINZA_ESCURO, 0.75f));
-    desenharTextoComSombra("I", 1042, 38, 18, COR_AMARELO_ESCURO);
-    desenharTextoComSombra("Controles", 1070, 38, 18, WHITE);
+    desenharTextoComSombra("I", 567, 683, 18, COR_AMARELO_ESCURO);
+    desenharTextoComSombra("Controles", 595, 683, 18, WHITE);
 }
 
 static void desenharPainelControles(void)
@@ -242,30 +335,30 @@ static void desenharPainelControles(void)
     desenharTextoComSombra("Pular: W", 330, y + 72, 20, WHITE);
     desenharTextoComSombra("Agachar: S", 330, y + 104, 20, WHITE);
     desenharTextoComSombra("Defender: F ou E", 330, y + 136, 20, WHITE);
-    desenharTextoComSombra("Ataques: G / H / T", 330, y + 168, 20, WHITE);
-    desenharTextoComSombra("Confirmar: ENTER", 330, y + 200, 20, WHITE);
+    desenharTextoComSombra("Ataques: G / T", 330, y + 168, 20, WHITE);
+    desenharTextoComSombra("Trocar: R", 330, y + 200, 20, WHITE);
+    desenharTextoComSombra("Confirmar: ENTER", 330, y + 232, 20, WHITE);
 
     desenharTextoComSombra("JOGADOR 2", 705, y, 22, RED);
     desenharTextoComSombra("Mover: SETAS", 705, y + 40, 20, WHITE);
     desenharTextoComSombra("Pular: CIMA", 705, y + 72, 20, WHITE);
     desenharTextoComSombra("Agachar: BAIXO", 705, y + 104, 20, WHITE);
     desenharTextoComSombra("Defender: SHIFT DIR", 705, y + 136, 20, WHITE);
-    desenharTextoComSombra("Ataques: J / K / L", 705, y + 168, 20, WHITE);
-    desenharTextoComSombra("Confirmar: L ou SHIFT", 705, y + 200, 20, WHITE);
+    desenharTextoComSombra("Ataques: J / L", 705, y + 168, 20, WHITE);
+    desenharTextoComSombra("Trocar: P", 705, y + 200, 20, WHITE);
+    desenharTextoComSombra("Confirmar: L ou SHIFT", 705, y + 232, 20, WHITE);
 
     desenharTextoComSombra("Cenario: Q / E", 545, 470, 20, COR_LARANJA_ESCURO);
-    desenharTextoComSombra("Alternativas J2: INSERT e KP_1 / KP_2 / KP_3", 405, 510, 18, WHITE);
+    desenharTextoComSombra("Alternativas J2: INSERT e KP_1 / KP_3", 405, 510, 18, WHITE);
 }
 
 /*
  * Desenha a tela de seleção usando o fundo pronto e retratos dinâmicos.
  */
-void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual, int mostrarControles) {
+void desenharSelecaoPersonagem(const int selecoesJ1[], int slotAtualJ1, int confirmouJ1,
+                               const int selecoesJ2[], int slotAtualJ2, int confirmouJ2,
+                               int cenarioAtual, int mostrarControles) {
     const char *cenarios[] = { "Marco Zero", "Praia de Boa Viagem", "Parque da Jaqueira" };
-    Personagem personagemJ1 = getPersonagem(selecaoJ1);
-    Personagem personagemJ2 = getPersonagem(selecaoJ2);
-    const FighterAssets *assetsJ1 = getFighterAssets(selecaoJ1);
-    const FighterAssets *assetsJ2 = getFighterAssets(selecaoJ2);
 
     if (bgPlayerSelect.id != 0)
     {
@@ -283,33 +376,26 @@ void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual, i
         ClearBackground(BLACK);
     }
 
-    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(BLACK, 0.52f));
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(BLACK, 0.18f));
 
-    desenharRetratoSelecao(
-        assetsJ1,
-        (Rectangle){SELECT_J1_RETRATO_X, SELECT_J1_RETRATO_Y, SELECT_RETRATO_LARGURA, SELECT_RETRATO_ALTURA},
-        RED,
-        "J1"
-    );
-    desenharRetratoSelecao(
-        assetsJ2,
-        (Rectangle){SELECT_J2_RETRATO_X, SELECT_J2_RETRATO_Y, SELECT_RETRATO_LARGURA, SELECT_RETRATO_ALTURA},
-        BLUE,
-        "J2"
-    );
+    desenharSlotsSelecao(selecoesJ1, SELECT_SLOTS_J1, SELECT_NOMES_J1, slotAtualJ1, confirmouJ1, BLUE, "J1");
+    desenharSlotsSelecao(selecoesJ2, SELECT_SLOTS_J2, SELECT_NOMES_J2, slotAtualJ2, confirmouJ2, RED, "J2");
 
-    desenharNomeCentralizado(personagemJ1.nome, SELECT_J1_NOME_X, SELECT_J1_NOME_Y, SELECT_NOME_LARGURA, BLUE);
-    desenharNomeCentralizado(personagemJ2.nome, SELECT_J2_NOME_X, SELECT_J2_NOME_Y, SELECT_NOME_LARGURA, RED);
-
-    desenharTextoComSombra("<", SELECT_J1_NOME_X - 25, SELECT_J1_NOME_Y, 32, BLUE);
-    desenharTextoComSombra(">", SELECT_J1_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J1_NOME_Y, 32, BLUE);
-    desenharTextoComSombra("<", SELECT_J2_NOME_X - 25, SELECT_J2_NOME_Y, 32, RED);
-    desenharTextoComSombra(">", SELECT_J2_NOME_X + SELECT_NOME_LARGURA + 15, SELECT_J2_NOME_Y, 32, RED);
+    if (!confirmouJ1)
+    {
+        desenharTextoComSombra("<", (int)SELECT_NOMES_J1[slotAtualJ1].x - 25, (int)SELECT_NOMES_J1[slotAtualJ1].y, 32, BLUE);
+        desenharTextoComSombra(">", (int)SELECT_NOMES_J1[slotAtualJ1].x + SELECT_NOME_LARGURA + 15, (int)SELECT_NOMES_J1[slotAtualJ1].y, 32, BLUE);
+    }
+    if (!confirmouJ2)
+    {
+        desenharTextoComSombra("<", (int)SELECT_NOMES_J2[slotAtualJ2].x - 25, (int)SELECT_NOMES_J2[slotAtualJ2].y, 32, RED);
+        desenharTextoComSombra(">", (int)SELECT_NOMES_J2[slotAtualJ2].x + SELECT_NOME_LARGURA + 15, (int)SELECT_NOMES_J2[slotAtualJ2].y, 32, RED);
+    }
 
     {
         const char *textoCenario = TextFormat("Cenario: %s", cenarios[cenarioAtual]);
         int larguraCenario = MeasureText(textoCenario, 20);
-        desenharTextoComSombra(textoCenario, LARGURA_TELA - larguraCenario - 70, 650, 20, WHITE);
+        desenharTextoComSombra(textoCenario, LARGURA_TELA / 2 - larguraCenario / 2, 645, 20, WHITE);
     }
     desenharAbaControles();
 

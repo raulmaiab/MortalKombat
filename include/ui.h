@@ -1,6 +1,7 @@
 #ifndef UI_H
 #define UI_H
 
+#include "equipe.h"
 #include "fighter_assets.h"
 #include "jogador.h"
 #include "raylib.h"
@@ -20,10 +21,12 @@ extern Texture2D bgPlayerSelect;
 /* ---- Funções de UI (Raylib) ---- */
 void carregarCenarios();
 void descarregarCenarios();
-void desenharHUD(Jogador *jogador1, Jogador *jogador2, int roundAtual, int segundosRestantes);
+void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2, int roundAtual, int segundosRestantes);
 void desenharCenario(Texture2D background);
 void desenharMenuPrincipal(Texture2D background);
-void desenharSelecaoPersonagem(int selecaoJ1, int selecaoJ2, int cenarioAtual, int mostrarControles);
+void desenharSelecaoPersonagem(const int selecoesJ1[], int slotAtualJ1, int confirmouJ1,
+                               const int selecoesJ2[], int slotAtualJ2, int confirmouJ2,
+                               int cenarioAtual, int mostrarControles);
 void desenharResultadoRound(Jogador *vencedor, Estatistica *stats, int totalStats);
 void desenharTelaVitoria(Jogador *vencedor);
 

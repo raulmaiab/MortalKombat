@@ -5,12 +5,9 @@
 
 /* Tipos de passinho/ação que o jogador pode executar */
 typedef enum {
-    ATAQUE_LEVE,
-    ATAQUE_MEDIO,
+    ATAQUE_NORMAL,
+    ATAQUE_BAIXO,
     ATAQUE_ESPECIAL,
-    ATAQUE_BAIXO_LEVE,
-    ATAQUE_BAIXO_MEDIO,
-    ATAQUE_BAIXO_ESPECIAL,
     ESQUIVA
 } TipoPassinho;
 

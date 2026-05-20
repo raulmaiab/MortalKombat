@@ -25,10 +25,8 @@ typedef struct
     int defesa;
     int defesaAlternativa;
     int esquiva;
-    int ataqueLeve;
-    int ataqueLeveAlternativo;
-    int ataqueMedio;
-    int ataqueMedioAlternativo;
+    int ataqueNormal;
+    int ataqueNormalAlternativo;
     int ataqueEspecial;
     int ataqueEspecialAlternativo;
 } PlayerControls;

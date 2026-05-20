@@ -26,8 +26,8 @@ typedef struct
 {
     char nome[MAX_NOME];
     int hpMaximo;
-    int danoLeve;
-    int danomedio;
+    int danoNormal;
+    int danoBaixo;
     int danoEspecial;
     int velocidade; /* influencia o tick de processamento */
 } Personagem;
