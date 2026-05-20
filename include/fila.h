@@ -20,12 +20,12 @@ typedef struct {
 } FilaPassinhos;
 
 /* ---- Funções da Fila ---- */
-void        inicializarFila(FilaPassinhos *fila);
-void        enfileirarPassinho(FilaPassinhos *fila, TipoPassinho passinho);
+void inicializarFila(FilaPassinhos *fila);
+void enfileirarPassinho(FilaPassinhos *fila, TipoPassinho passinho);
 TipoPassinho desenfileirarPassinho(FilaPassinhos *fila);
 TipoPassinho peekFila(FilaPassinhos *fila);
-int         filaVazia(FilaPassinhos *fila);
-int         filaCheia(FilaPassinhos *fila);
-void        limparFila(FilaPassinhos *fila);
+int filaVazia(FilaPassinhos *fila);
+int filaCheia(FilaPassinhos *fila);
+void limparFila(FilaPassinhos *fila);
 
 #endif
