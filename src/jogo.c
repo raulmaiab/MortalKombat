@@ -30,7 +30,6 @@ typedef enum
 } IndiceCenario;
 
 #define TICK_ATAQUE 8
-#define TEMPO_ROUND_SEGUNDOS 99
 #define KNOCKDOWN_DISPLAY_TICKS 60
 #define POS_INICIAL_J1 200
 #define POS_INICIAL_J2 (LARGURA_TELA - 260)
@@ -60,52 +59,11 @@ static void prepararStats(Estatistica *statsRound, const Jogador *jogador1, cons
 }
 
 static void iniciarPartida(EquipeJogador *equipe1, EquipeJogador *equipe2, Estatistica *statsRound,
-                           const int selecoesJ1[], const int selecoesJ2[],
-                           int *roundAtual, int *ticksRestantesRound)
+                           const int selecoesJ1[], const int selecoesJ2[])
 {
     inicializarEquipe(equipe1, selecoesJ1, POS_INICIAL_J1, CHAO_Y, 1);
     inicializarEquipe(equipe2, selecoesJ2, POS_INICIAL_J2, CHAO_Y, 0);
     prepararStats(statsRound, jogadorAtivo(equipe1), jogadorAtivo(equipe2));
-    *roundAtual = 1;
-    *ticksRestantesRound = TEMPO_ROUND_SEGUNDOS * FPS_ALVO;
-}
-
-static void iniciarProximoRound(EquipeJogador *equipe1, EquipeJogador *equipe2, Estatistica *statsRound,
-                                int *roundAtual, int *ticksRestantesRound)
-{
-    (*roundAtual)++;
-    resetarEquipeParaNovoRound(equipe1, POS_INICIAL_J1, CHAO_Y, 1);
-    resetarEquipeParaNovoRound(equipe2, POS_INICIAL_J2, CHAO_Y, 0);
-    prepararStats(statsRound, jogadorAtivo(equipe1), jogadorAtivo(equipe2));
-    *ticksRestantesRound = TEMPO_ROUND_SEGUNDOS * FPS_ALVO;
-}
-
-static int hpTotalEquipe(const EquipeJogador *equipe)
-{
-    int total = 0;
-    for (int i = 0; i < TAM_EQUIPE; i++)
-        total += equipe->membros[i].jogador.hp;
-    return total;
-}
-
-static int hpMaximoTotalEquipe(const EquipeJogador *equipe)
-{
-    int total = 0;
-    for (int i = 0; i < TAM_EQUIPE; i++)
-        total += equipe->membros[i].jogador.personagem.hpMaximo;
-    return total;
-}
-
-static int compararHpPercentual(const EquipeJogador *equipe1, const EquipeJogador *equipe2)
-{
-    int hpJ1 = hpTotalEquipe(equipe1) * 1000 / hpMaximoTotalEquipe(equipe1);
-    int hpJ2 = hpTotalEquipe(equipe2) * 1000 / hpMaximoTotalEquipe(equipe2);
-
-    if (hpJ1 > hpJ2)
-        return 1;
-    if (hpJ2 > hpJ1)
-        return 2;
-    return 0;
 }
 
 static Texture2D selecionarCenario(IndiceCenario cenarioAtual)
@@ -156,22 +114,21 @@ static int verificarVencedorEquipes(EquipeJogador *equipe1, EquipeJogador *equip
     return 0;
 }
 
-static void finalizarRound(int resultado, EquipeJogador *equipe1, EquipeJogador *equipe2,
-                           Jogador **vencedorRound, Estatistica *statsRound)
+static void finalizarPartida(int resultado, EquipeJogador *equipe1, EquipeJogador *equipe2,
+                             Jogador **vencedorPartida, Estatistica *statsRound)
 {
     EquipeJogador *equipeVencedora = (resultado == 1) ? equipe1 : equipe2;
     Jogador *perdedor = (resultado == 1) ? jogadorAtivo(equipe2) : jogadorAtivo(equipe1);
 
-    *vencedorRound = jogadorAtivo(equipeVencedora);
+    *vencedorPartida = jogadorAtivo(equipeVencedora);
     if (perdedor != NULL && perdedor->hp <= 0)
     {
         perdedor->state = KNOCKDOWN;
         perdedor->stateTicks = 0;
     }
 
-    equipeVencedora->roundsVencidos++;
-    if (*vencedorRound != NULL)
-        limparFila(&(*vencedorRound)->fila);
+    if (*vencedorPartida != NULL)
+        limparFila(&(*vencedorPartida)->fila);
     ordenarEstatisticas(statsRound, 2);
 }
 
@@ -186,8 +143,6 @@ int executarJogo(void)
     EstadoJogo estado = ESTADO_MENU;
     IndiceCenario cenarioAtual = CENARIO_MARCO_ZERO;
     int tickAtual = 0;
-    int roundAtual = 1;
-    int ticksRestantesRound = TEMPO_ROUND_SEGUNDOS * FPS_ALVO;
     int ticksFimRound = 0;
 
     SelecaoPersonagens selecaoJ1;
@@ -239,17 +194,13 @@ int executarJogo(void)
             if (selecaoJ1.confirmouTudo && selecaoJ2.confirmouTudo)
             {
                 iniciarPartida(&equipe1, &equipe2, statsRound,
-                               selecaoJ1.personagens, selecaoJ2.personagens,
-                               &roundAtual, &ticksRestantesRound);
+                               selecaoJ1.personagens, selecaoJ2.personagens);
                 mostrarControles = 0;
                 estado = ESTADO_COMBATE;
             }
             break;
 
         case ESTADO_COMBATE:
-            if (ticksRestantesRound > 0)
-                ticksRestantesRound--;
-
             if (tickAtual % TICK_GANHO_ENERGIA == 0)
             {
                 adicionarEnergia(jogadorAtivo(&equipe1), GANHO_ENERGIA_TEMPO);
@@ -269,20 +220,12 @@ int executarJogo(void)
 
             {
                 int resultado = verificarVencedorEquipes(&equipe1, &equipe2);
-                if (resultado == 0 && ticksRestantesRound == 0)
-                    resultado = compararHpPercentual(&equipe1, &equipe2);
 
                 if (resultado != 0)
                 {
-                    finalizarRound(resultado, &equipe1, &equipe2, &vencedorRound, statsRound);
+                    finalizarPartida(resultado, &equipe1, &equipe2, &vencedorRound, statsRound);
                     ticksFimRound = KNOCKDOWN_DISPLAY_TICKS;
                     estado = ESTADO_FIM_ROUND;
-                }
-                else if (ticksRestantesRound == 0)
-                {
-                    vencedorRound = NULL;
-                    ordenarEstatisticas(statsRound, 2);
-                    estado = ESTADO_RESULTADO_ROUND;
                 }
             }
             break;
@@ -295,22 +238,12 @@ int executarJogo(void)
             if (ticksFimRound > 0)
                 ticksFimRound--;
             else
-                estado = ESTADO_RESULTADO_ROUND;
+                estado = ESTADO_VITORIA;
             break;
 
         case ESTADO_RESULTADO_ROUND:
             if (IsKeyPressed(KEY_ENTER))
-            {
-                if (equipe1.roundsVencidos >= 2 || equipe2.roundsVencidos >= 2)
-                {
-                    estado = ESTADO_VITORIA;
-                }
-                else
-                {
-                    iniciarProximoRound(&equipe1, &equipe2, statsRound, &roundAtual, &ticksRestantesRound);
-                    estado = ESTADO_COMBATE;
-                }
-            }
+                estado = ESTADO_VITORIA;
             break;
 
         case ESTADO_VITORIA:
@@ -345,7 +278,7 @@ int executarJogo(void)
                 renderPlayer(jogadorAtivo(&equipe1), getFighterAssets(indiceAtivoEquipe(&equipe1)), RED, "J1");
             if (jogadorAtivo(&equipe2) != NULL)
                 renderPlayer(jogadorAtivo(&equipe2), getFighterAssets(indiceAtivoEquipe(&equipe2)), BLUE, "J2");
-            desenharHUD(&equipe1, &equipe2, roundAtual, (ticksRestantesRound + FPS_ALVO - 1) / FPS_ALVO);
+            desenharHUD(&equipe1, &equipe2);
             break;
         case ESTADO_RESULTADO_ROUND:
             desenharResultadoRound(vencedorRound, statsRound, 2);

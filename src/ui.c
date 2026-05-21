@@ -166,28 +166,15 @@ static void desenharHUDJogador(const EquipeJogador *equipe, int x, int y, Color 
     }
 }
 
-void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2, int roundAtual, int segundosRestantes) {
+void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2) {
     int margem = 20;
 
     desenharHUDJogador(equipe1, margem, margem, COR_HP_J1, 0);
     desenharHUDJogador(equipe2, LARGURA_TELA - margem - 400, margem, COR_HP_J2, 1);
 
-    char textoRound[20];
-    sprintf(textoRound, "ROUND %d", roundAtual);
-    int larguraTexto = MeasureText(textoRound, 28);
-    DrawText(textoRound, LARGURA_TELA / 2 - larguraTexto / 2, margem, 28, WHITE);
-
-    char textoTempo[8];
-    snprintf(textoTempo, sizeof(textoTempo), "%02d", segundosRestantes);
-    int larguraTempo = MeasureText(textoTempo, 34);
-    DrawText(textoTempo, LARGURA_TELA / 2 - larguraTempo / 2, margem + 28, 34,
-             segundosRestantes <= 10 ? RED : WHITE);
-
-    /* -- Placar de rounds -- */
-    char placar[20];
-    sprintf(placar, "%d  x  %d", equipe1->roundsVencidos, equipe2->roundsVencidos);
-    int larguraPlacar = MeasureText(placar, 24);
-    DrawText(placar, LARGURA_TELA / 2 - larguraPlacar / 2, margem + 62, 24, YELLOW);
+    desenharTextoCentralizadoComSombra("ELIMINE OS 3 PERSONAGENS", LARGURA_TELA / 2, margem, 22, WHITE);
+    desenharTextoCentralizadoComSombra(TextFormat("%d vivos  x  %d vivos", equipe1->tamanho, equipe2->tamanho),
+                                       LARGURA_TELA / 2, margem + 30, 20, WHITE);
 
     if (equipe1->inicio == NULL || equipe2->inicio == NULL)
         return;
@@ -196,7 +183,7 @@ void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2, int
     const char *alcance = distancia <= DISTANCIA_MAXIMA_ATAQUE ? "NO ALCANCE" : "LONGE";
     Color corAlcance = distancia <= DISTANCIA_MAXIMA_ATAQUE ? GREEN : RED;
     const char *textoAlcance = TextFormat("Distancia: %.0f px | %s", distancia, alcance);
-    DrawText(textoAlcance, LARGURA_TELA / 2 - MeasureText(textoAlcance, 18) / 2, margem + 92, 18, corAlcance);
+    desenharTextoCentralizadoComSombra(textoAlcance, LARGURA_TELA / 2, margem + 62, 18, corAlcance);
 
     DrawText(TextFormat("Fila: %d | Stun: %d", equipe1->tamanho, equipe1->inicio->jogador.stunTicks),
              margem, margem + 150, 16, equipe1->inicio->jogador.stunTicks > 0 ? ORANGE : LIGHTGRAY);

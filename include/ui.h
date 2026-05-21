@@ -21,7 +21,7 @@ extern Texture2D bgPlayerSelect;
 /* ---- Funções de UI (Raylib) ---- */
 void carregarCenarios();
 void descarregarCenarios();
-void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2, int roundAtual, int segundosRestantes);
+void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2);
 void desenharCenario(Texture2D background);
 void desenharMenuPrincipal(Texture2D background);
 void desenharSelecaoPersonagem(const int selecoesJ1[], int slotAtualJ1, int confirmouJ1,
