@@ -5,6 +5,7 @@
 
 /* Tipos de passinho/ação que o jogador pode executar */
 typedef enum {
+    PASSINHO_NENHUM = -1,
     ATAQUE_NORMAL,
     ATAQUE_BAIXO,
     ATAQUE_ESPECIAL,

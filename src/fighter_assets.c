@@ -1,7 +1,7 @@
 #include "fighter_assets.h"
 #include <stdio.h>
 
-static FighterAssets lutadores[TOTAL_PERSONAGENS];
+static FighterAssets lutadores[TOTAL_PERSONAGENS][2];
 
 static const char *pastasPersonagens[TOTAL_PERSONAGENS] = {
     "joao_campos",
@@ -37,6 +37,46 @@ static void carregarFrameSeExistir(FighterAnimation *anim, const char *path)
         (float)anim->frames[anim->totalFrames].height
     };
     anim->totalFrames++;
+}
+
+static int pastaExiste(const char *pasta)
+{
+    char caminho[160];
+
+    snprintf(caminho, sizeof(caminho), "assets/fighters/%s", pasta);
+    return DirectoryExists(caminho);
+}
+
+static int pastaTemAssets(const char *pasta)
+{
+    char caminho[180];
+    const char *arquivos[] = {
+        "SpriteSheet.png", "portrait.png", "idle.png", "walk.png",
+        "attack.png", "stun.png", "MeuTrabalho.png", "Andando.png"
+    };
+
+    for (int i = 0; i < 8; i++)
+    {
+        snprintf(caminho, sizeof(caminho), "assets/fighters/%s/%s", pasta, arquivos[i]);
+        if (FileExists(caminho))
+            return 1;
+    }
+
+    return 0;
+}
+
+static const char *pastaJogador(const char *pastaBase, int jogador)
+{
+    static char pastaComJogador[2][160];
+    int indiceBuffer = jogador == 2 ? 1 : 0;
+
+    snprintf(pastaComJogador[indiceBuffer], sizeof(pastaComJogador[indiceBuffer]),
+             "%s/p%d", pastaBase, jogador);
+
+    if (pastaExiste(pastaComJogador[indiceBuffer]) && pastaTemAssets(pastaComJogador[indiceBuffer]))
+        return pastaComJogador[indiceBuffer];
+
+    return pastaBase;
 }
 
 static void adicionarFrameSpriteSheet(FighterAnimation *anim, Texture2D sheet, int coluna, int linha)
@@ -215,10 +255,11 @@ static Texture2D carregarPortrait(const FighterAssets *assets, const char *pasta
     return (Texture2D){0};
 }
 
-static void carregarAssetsPersonagem(IndicePersonagem indice)
+static void carregarAssetsPersonagem(IndicePersonagem indice, int jogador)
 {
-    FighterAssets *assets = &lutadores[indice];
-    const char *pasta = pastaDisponivel(indice);
+    FighterAssets *assets = &lutadores[indice][jogador - 1];
+    const char *pastaBase = pastaDisponivel(indice);
+    const char *pasta = pastaJogador(pastaBase, jogador);
 
     if (!carregarSpriteSheetTeste(assets, pasta))
     {
@@ -239,62 +280,68 @@ static void carregarAssetsPersonagem(IndicePersonagem indice)
 void carregarAssetsLutadores(void)
 {
     for (int i = 0; i < TOTAL_PERSONAGENS; i++)
-        carregarAssetsPersonagem((IndicePersonagem)i);
+    {
+        carregarAssetsPersonagem((IndicePersonagem)i, 1);
+        carregarAssetsPersonagem((IndicePersonagem)i, 2);
+    }
 }
 
 void descarregarAssetsLutadores(void)
 {
-    unsigned int texturasDescarregadas[TOTAL_PERSONAGENS * 8 * MAX_ANIM_FRAMES];
+    unsigned int texturasDescarregadas[TOTAL_PERSONAGENS * 2 * (8 * MAX_ANIM_FRAMES + 1)];
     int totalDescarregadas = 0;
 
     for (int i = 0; i < TOTAL_PERSONAGENS; i++)
     {
-        FighterAssets *assets = &lutadores[i];
-        FighterAnimation *animacoes[] = {
-            &assets->idle, &assets->walk, &assets->jump,
-            &assets->dodge, &assets->defense, &assets->attack,
-            &assets->stun, &assets->knockdown
-        };
-
-        for (int a = 0; a < 8; a++)
+        for (int j = 0; j < 2; j++)
         {
-            for (int f = 0; f < animacoes[a]->totalFrames; f++)
-            {
-                Texture2D textura = animacoes[a]->frames[f];
-                int jaDescarregada = 0;
+            FighterAssets *assets = &lutadores[i][j];
+            FighterAnimation *animacoes[] = {
+                &assets->idle, &assets->walk, &assets->jump,
+                &assets->dodge, &assets->defense, &assets->attack,
+                &assets->stun, &assets->knockdown
+            };
 
+            for (int a = 0; a < 8; a++)
+            {
+                for (int f = 0; f < animacoes[a]->totalFrames; f++)
+                {
+                    Texture2D textura = animacoes[a]->frames[f];
+                    int jaDescarregada = 0;
+
+                    for (int t = 0; t < totalDescarregadas; t++)
+                    {
+                        if (texturasDescarregadas[t] == textura.id)
+                        {
+                            jaDescarregada = 1;
+                            break;
+                        }
+                    }
+
+                    if (textura.id != 0 && !jaDescarregada)
+                    {
+                        UnloadTexture(textura);
+                        texturasDescarregadas[totalDescarregadas++] = textura.id;
+                    }
+                }
+            }
+
+            if (assets->portrait.id != 0)
+            {
+                int jaDescarregada = 0;
                 for (int t = 0; t < totalDescarregadas; t++)
                 {
-                    if (texturasDescarregadas[t] == textura.id)
+                    if (texturasDescarregadas[t] == assets->portrait.id)
                     {
                         jaDescarregada = 1;
                         break;
                     }
                 }
-
-                if (textura.id != 0 && !jaDescarregada)
+                if (!jaDescarregada)
                 {
-                    UnloadTexture(textura);
-                    texturasDescarregadas[totalDescarregadas++] = textura.id;
+                    UnloadTexture(assets->portrait);
+                    texturasDescarregadas[totalDescarregadas++] = assets->portrait.id;
                 }
-            }
-        }
-
-        if (assets->portrait.id != 0)
-        {
-            int jaDescarregada = 0;
-            for (int t = 0; t < totalDescarregadas; t++)
-            {
-                if (texturasDescarregadas[t] == assets->portrait.id)
-                {
-                    jaDescarregada = 1;
-                    break;
-                }
-            }
-            if (!jaDescarregada)
-            {
-                UnloadTexture(assets->portrait);
-                texturasDescarregadas[totalDescarregadas++] = assets->portrait.id;
             }
         }
     }
@@ -302,9 +349,16 @@ void descarregarAssetsLutadores(void)
 
 const FighterAssets *getFighterAssets(IndicePersonagem indice)
 {
+    return getFighterAssetsJogador(indice, 1);
+}
+
+const FighterAssets *getFighterAssetsJogador(IndicePersonagem indice, int jogador)
+{
+    int indiceJogador = jogador == 2 ? 1 : 0;
+
     if (indice < 0 || indice >= TOTAL_PERSONAGENS)
-        return &lutadores[0];
-    return &lutadores[indice];
+        return &lutadores[0][indiceJogador];
+    return &lutadores[indice][indiceJogador];
 }
 
 const FighterAnimation *getAnimationForState(const FighterAssets *assets, PlayerState state)

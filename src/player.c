@@ -1,7 +1,5 @@
 #include "player.h"
-#include "fila.h"
 #include <stddef.h>
-#include "combate.h"
 
 #define SPRITE_ALTURA 504
 #define SPRITE_LARGURA 504
@@ -28,22 +26,6 @@ static void atualizarTimers(Jogador *jogador)
         jogador->ataqueAgachadoTicks--;
 }
 
-static int calcularCustoFila(const FilaPassinhos *fila)
-{
-    int custoTotal = 0;
-    int idx = fila->inicio;
-    for (int i = 0; i < fila->tamanho; i++)
-    {
-        TipoPassinho p = fila->elementos[idx];
-        int custo = 0;
-        if (p == ATAQUE_ESPECIAL)
-            custo = energiaConsumida[2];
-        custoTotal += custo;
-        idx = (idx + 1) % TAM_MAX_FILA;
-    }
-    return custoTotal;
-}
-
 static void atualizarFisica(Jogador *jogador)
 {
     if (!jogador->noChao)
@@ -66,12 +48,12 @@ static void atualizarEstado(Jogador *jogador, int moveu)
 
     if (jogador->hp <= 0)
         novoEstado = KNOCKDOWN;
+    else if (jogador->defendendo)
+        novoEstado = DEFENSE;
     else if (jogador->stunTicks > 0)
         novoEstado = STUN;
     else if (jogador->agachado || jogador->ataqueAgachadoTicks > 0)
         novoEstado = CROUCH;
-    else if (jogador->defendendo)
-        novoEstado = DEFENSE;
     else if (jogador->attackTicks > 0)
         novoEstado = ATTACK;
     else if (!jogador->noChao)
@@ -122,9 +104,10 @@ static int keyPressedAlternativo(int teclaPrincipal, int teclaAlternativa)
            (teclaAlternativa != 0 && IsKeyPressed(teclaAlternativa));
 }
 
-void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
+TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
 {
     int moveu = 0;
+    TipoPassinho ataqueSolicitado = PASSINHO_NENHUM;
 
     atualizarTimers(jogador);
     jogador->olhandoDireita = oponente->posX > jogador->posX;
@@ -141,15 +124,14 @@ void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
 
     if (jogador->hp > 0 && jogador->stunTicks == 0)
     {
-        if (!jogador->defendendo)
+        if (!jogador->defendendo && jogador->attackTicks == 0 && jogador->ataqueAgachadoTicks == 0)
         {
             if (keyPressedAlternativo(controles.ataqueNormal, controles.ataqueNormalAlternativo))
             {
                 int custo = jogador->agachado ? energiaConsumida[1] : energiaConsumida[0];
-                int energiaDisponivel = jogador->energia - calcularCustoFila(&jogador->fila);
-                if (energiaDisponivel >= custo)
+                if (jogador->energia >= custo)
                 {
-                    enfileirarPassinho(&jogador->fila, jogador->agachado ? ATAQUE_BAIXO : ATAQUE_NORMAL);
+                    ataqueSolicitado = jogador->agachado ? ATAQUE_BAIXO : ATAQUE_NORMAL;
                     jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
                     jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
                 }
@@ -157,17 +139,17 @@ void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
             if (keyPressedAlternativo(controles.ataqueEspecial, controles.ataqueEspecialAlternativo))
             {
                 int custo = energiaConsumida[2];
-                int energiaDisponivel = jogador->energia - calcularCustoFila(&jogador->fila);
-                if (energiaDisponivel >= custo)
+                if (jogador->energia >= custo)
                 {
-                    enfileirarPassinho(&jogador->fila, ATAQUE_ESPECIAL);
+                    ataqueSolicitado = ATAQUE_ESPECIAL;
                     jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
                     jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
                 }
             }
         }
 
-        if (!jogador->agachado && jogador->ataqueAgachadoTicks == 0 && jogador->esquivaTicks == 0)
+        if (!jogador->agachado && jogador->attackTicks == 0 &&
+            jogador->ataqueAgachadoTicks == 0 && jogador->esquivaTicks == 0)
         {
             float velocidade = jogador->defendendo ? VELOCIDADE_DEFESA : VELOCIDADE_MOVIMENTO;
 
@@ -192,6 +174,7 @@ void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
     limitarPosicaoX(jogador);
     atualizarFisica(jogador);
     atualizarEstado(jogador, moveu);
+    return ataqueSolicitado;
 }
 
 static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *anim)

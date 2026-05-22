@@ -30,6 +30,7 @@ typedef struct
 void carregarAssetsLutadores(void);
 void descarregarAssetsLutadores(void);
 const FighterAssets *getFighterAssets(IndicePersonagem indice);
+const FighterAssets *getFighterAssetsJogador(IndicePersonagem indice, int jogador);
 const FighterAnimation *getAnimationForState(const FighterAssets *assets, PlayerState state);
 Texture2D getPortraitForFighter(const FighterAssets *assets);
 

@@ -184,9 +184,9 @@ void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2,
     if (equipe1->inicio == NULL || equipe2->inicio == NULL)
         return;
 
-    DrawText(TextFormat("Fila: %d | Stun: %d", equipe1->tamanho, equipe1->inicio->jogador.stunTicks),
+    DrawText(TextFormat("Stun: %d", equipe1->inicio->jogador.stunTicks),
              margem, margem + 150, 16, equipe1->inicio->jogador.stunTicks > 0 ? ORANGE : LIGHTGRAY);
-    DrawText(TextFormat("Fila: %d | Stun: %d", equipe2->tamanho, equipe2->inicio->jogador.stunTicks),
+    DrawText(TextFormat("Stun: %d", equipe2->inicio->jogador.stunTicks),
              LARGURA_TELA - margem - 190, margem + 150, 16,
              equipe2->inicio->jogador.stunTicks > 0 ? ORANGE : LIGHTGRAY);
 }

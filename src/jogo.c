@@ -3,7 +3,6 @@
 #include "decisao_vitoria.h"
 #include "equipe.h"
 #include "fighter_assets.h"
-#include "fila.h"
 #include "jogador.h"
 #include "ordenacao.h"
 #include "player.h"
@@ -32,7 +31,6 @@ typedef enum
     TOTAL_CENARIOS
 } IndiceCenario;
 
-#define TICK_ATAQUE 8
 #define KNOCKDOWN_DISPLAY_TICKS 60
 #define POS_INICIAL_J1 200
 #define POS_INICIAL_J2 (LARGURA_TELA - 260)
@@ -138,31 +136,6 @@ static Texture2D selecionarCenario(IndiceCenario cenarioAtual)
     case CENARIO_MARCO_ZERO:
     default:
         return bgMarcoZero;
-    }
-}
-
-static void processarFilaAtaques(Jogador *jogador1, Jogador *jogador2, Estatistica *statsRound, int tickAtual)
-{
-    if (tickAtual % TICK_ATAQUE != 0)
-        return;
-
-    if (!filaVazia(&jogador1->fila))
-    {
-        TipoPassinho p = desenfileirarPassinho(&jogador1->fila);
-        if (p != ESQUIVA)
-            processarPassinho(p, jogador1, jogador2, statsRound, tickAtual);
-    }
-
-    if (!filaVazia(&jogador2->fila))
-    {
-        TipoPassinho p = desenfileirarPassinho(&jogador2->fila);
-        if (p != ESQUIVA)
-        {
-            Estatistica statsInvertido[2] = {statsRound[1], statsRound[0]};
-            processarPassinho(p, jogador2, jogador1, statsInvertido, tickAtual);
-            statsRound[0] = statsInvertido[1];
-            statsRound[1] = statsInvertido[0];
-        }
     }
 }
 
@@ -305,9 +278,23 @@ int executarJogo(void)
             if (IsKeyPressed(KEY_P))
                 trocarParaProximoPersonagem(&equipe2);
 
-            updatePlayer(jogadorAtivo(&equipe1), jogadorAtivo(&equipe2), CONTROLES_J1);
-            updatePlayer(jogadorAtivo(&equipe2), jogadorAtivo(&equipe1), CONTROLES_J2);
-            processarFilaAtaques(jogadorAtivo(&equipe1), jogadorAtivo(&equipe2), statsRound, tickAtual);
+            {
+                Jogador *ativoJ1 = jogadorAtivo(&equipe1);
+                Jogador *ativoJ2 = jogadorAtivo(&equipe2);
+                TipoPassinho ataqueJ1 = updatePlayer(ativoJ1, ativoJ2, CONTROLES_J1);
+                TipoPassinho ataqueJ2 = updatePlayer(ativoJ2, ativoJ1, CONTROLES_J2);
+
+                if (ataqueJ1 != PASSINHO_NENHUM)
+                    processarPassinho(ataqueJ1, ativoJ1, ativoJ2, statsRound, tickAtual);
+
+                if (ataqueJ2 != PASSINHO_NENHUM)
+                {
+                    Estatistica statsInvertido[2] = {statsRound[1], statsRound[0]};
+                    processarPassinho(ataqueJ2, ativoJ2, ativoJ1, statsInvertido, tickAtual);
+                    statsRound[0] = statsInvertido[1];
+                    statsRound[1] = statsInvertido[0];
+                }
+            }
             trocarSeAtivoMorreu(&equipe1);
             trocarSeAtivoMorreu(&equipe2);
 
@@ -412,9 +399,9 @@ int executarJogo(void)
         case ESTADO_FIM_ROUND:
             desenharCenario(selecionarCenario(cenarioAtual));
             if (jogadorAtivo(&equipe1) != NULL)
-                renderPlayer(jogadorAtivo(&equipe1), getFighterAssets(indiceAtivoEquipe(&equipe1)), RED, "J1");
+                renderPlayer(jogadorAtivo(&equipe1), getFighterAssetsJogador(indiceAtivoEquipe(&equipe1), 1), BLUE, "J1");
             if (jogadorAtivo(&equipe2) != NULL)
-                renderPlayer(jogadorAtivo(&equipe2), getFighterAssets(indiceAtivoEquipe(&equipe2)), BLUE, "J2");
+                renderPlayer(jogadorAtivo(&equipe2), getFighterAssetsJogador(indiceAtivoEquipe(&equipe2), 2), RED, "J2");
             desenharHUD(&equipe1, &equipe2, nomeJ1, nomeJ2);
             break;
         case ESTADO_RESULTADO_ROUND:

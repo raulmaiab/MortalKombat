@@ -1,6 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include "combate.h"
 #include "fighter_assets.h"
 #include "jogador.h"
 #include "raylib.h"
@@ -13,8 +14,8 @@
 #define ESQUIVA_TICKS 20
 #define ESQUIVA_COOLDOWN_TICKS 45
 #define ESQUIVA_DISTANCIA 70.0f
-#define ATTACK_STATE_TICKS 40
-#define CROUCH_ATTACK_STATE_TICKS 40
+#define ATTACK_STATE_TICKS RECUPERACAO_ATAQUE_TICKS
+#define CROUCH_ATTACK_STATE_TICKS RECUPERACAO_ATAQUE_TICKS
 #define CHAO_Y (ALTURA_TELA - ALTURA_PERSONAGEM)
 
 typedef struct
@@ -31,7 +32,7 @@ typedef struct
     int ataqueEspecialAlternativo;
 } PlayerControls;
 
-void updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles);
+TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles);
 void renderPlayer(const Jogador *jogador, const FighterAssets *assets, Color corBase, const char *rotulo);
 void resetPlayerPosition(Jogador *jogador, float posX, float posY, int olhandoDireita);
 

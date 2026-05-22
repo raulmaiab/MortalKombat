@@ -11,12 +11,17 @@ static float calcularDistancia(const Jogador *a, const Jogador *b)
     return sqrtf(dx * dx + dy * dy);
 }
 
-static void aplicarStun(Jogador *alvo, int tickAtual)
+static void aplicarRecuperacaoAtaque(Jogador *atacante, TipoPassinho passinho)
 {
-    alvo->stunTicks = STUN_TICKS_PADRAO;
-    limparFila(&alvo->fila);
-    alvo->ultimoGolpeTick = tickAtual;
-    alvo->golpesSeguidos = 0;
+    if (passinho == ATAQUE_BAIXO)
+    {
+        if (atacante->ataqueAgachadoTicks < RECUPERACAO_ATAQUE_TICKS)
+            atacante->ataqueAgachadoTicks = RECUPERACAO_ATAQUE_TICKS;
+    }
+    else if (atacante->attackTicks < RECUPERACAO_ATAQUE_TICKS)
+    {
+        atacante->attackTicks = RECUPERACAO_ATAQUE_TICKS;
+    }
 }
 
 static int ataqueBaixo(TipoPassinho passinho)
@@ -105,16 +110,10 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
         return;
     }
 
-    if (!filaVazia(&alvo->fila) && peekFila(&alvo->fila) == ESQUIVA)
-    {
-        desenfileirarPassinho(&alvo->fila);
-        stats[1].esquivasRealizadas++;
-        return;
-    }
-
     if (!ataqueBaixo(passinho) && alvo->defendendo && alvo->noChao && defesaDeFrente(alvo, atacante))
     {
         adicionarEnergia(atacante, GANHO_ENERGIA_DEFESA);
+        aplicarRecuperacaoAtaque(atacante, passinho);
         alvo->stunTicks = BLOCKSTUN_TICKS;
         limparFila(&alvo->fila);
         alvo->ultimoGolpeTick = tickAtual;
@@ -126,27 +125,12 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
         alvo->hp = 0;
 
     adicionarEnergia(atacante, GANHO_ENERGIA_ACERTO);
+    aplicarRecuperacaoAtaque(atacante, passinho);
     stats[0].danoTotal += dano;
-
-    if (tickAtual - alvo->ultimoGolpeTick < HITSTUN_WINDOW_TICKS)
-    {
-        alvo->golpesSeguidos++;
-    }
-    else
-    {
-        alvo->golpesSeguidos = 1;
-    }
-
-    if (alvo->golpesSeguidos >= 3)
-    {
-        aplicarStun(alvo, tickAtual);
-    }
-    else
-    {
-        alvo->stunTicks = STUN_TICKS_PADRAO;
-        limparFila(&alvo->fila);
-        alvo->ultimoGolpeTick = tickAtual;
-    }
+    alvo->stunTicks = STUN_TICKS_PADRAO;
+    limparFila(&alvo->fila);
+    alvo->ultimoGolpeTick = tickAtual;
+    alvo->golpesSeguidos = 0;
 }
 
 /*
@@ -210,6 +194,7 @@ int verificarVencedor(Jogador *jogador1, Jogador *jogador2)
  */
 void encerrarRound(Jogador *vencedor, Estatistica *stats)
 {
+    (void)stats;
     vencedor->roundsVencidos++;
     limparFila(&vencedor->fila);
 }
