@@ -4,6 +4,7 @@ CFLAGS = -Wall -Wextra -std=c99 -Iinclude
 
 OBJ = \
 src/combate.o \
+src/decisao_vitoria.o \
 src/equipe.o \
 src/fighter_assets.o \
 src/fila.o \

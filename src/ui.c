@@ -3,7 +3,6 @@
 #include "ordenacao.h"
 #include "raylib.h"
 #include "selecao_personagens.h"
-#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -64,12 +63,19 @@ static void desenharTextoCentralizadoComSombra(const char *texto, int centroX, i
     desenharTextoComSombra(texto, centroX - largura / 2, y, tamanho, cor);
 }
 
-static float distanciaJogadores(const Jogador *jogador1, const Jogador *jogador2) {
-    float dx = jogador1->posX - jogador2->posX;
-    float dy = jogador1->posY - jogador2->posY;
-    return sqrtf(dx * dx + dy * dy);
+static const char *textoOpcaoPosPartida(OpcaoPosPartida opcao)
+{
+    switch (opcao)
+    {
+    case OPCAO_POS_MENU:
+        return "Voltar ao Menu";
+    case OPCAO_POS_SELECAO:
+        return "Trocar Lutadores";
+    case OPCAO_POS_REINICIAR:
+    default:
+        return "Reiniciar Mesmos Lutadores";
+    }
 }
-
 
 /*
  * Desenha o HUD completo: barras de HP, energia, placar de rounds e round atual.
@@ -166,24 +172,17 @@ static void desenharHUDJogador(const EquipeJogador *equipe, int x, int y, Color 
     }
 }
 
-void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2) {
+void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2,
+                 const char *nomeJ1, const char *nomeJ2) {
     int margem = 20;
 
     desenharHUDJogador(equipe1, margem, margem, COR_HP_J1, 0);
     desenharHUDJogador(equipe2, LARGURA_TELA - margem - 400, margem, COR_HP_J2, 1);
 
-    desenharTextoCentralizadoComSombra("ELIMINE OS 3 PERSONAGENS", LARGURA_TELA / 2, margem, 22, WHITE);
-    desenharTextoCentralizadoComSombra(TextFormat("%d vivos  x  %d vivos", equipe1->tamanho, equipe2->tamanho),
-                                       LARGURA_TELA / 2, margem + 30, 20, WHITE);
-
+    desenharTextoCentralizadoComSombra(TextFormat("%s  x  %s", nomeJ1, nomeJ2),
+                                       LARGURA_TELA / 2, margem, 22, WHITE);
     if (equipe1->inicio == NULL || equipe2->inicio == NULL)
         return;
-
-    float distancia = distanciaJogadores(&equipe1->inicio->jogador, &equipe2->inicio->jogador);
-    const char *alcance = distancia <= DISTANCIA_MAXIMA_ATAQUE ? "NO ALCANCE" : "LONGE";
-    Color corAlcance = distancia <= DISTANCIA_MAXIMA_ATAQUE ? GREEN : RED;
-    const char *textoAlcance = TextFormat("Distancia: %.0f px | %s", distancia, alcance);
-    desenharTextoCentralizadoComSombra(textoAlcance, LARGURA_TELA / 2, margem + 62, 18, corAlcance);
 
     DrawText(TextFormat("Fila: %d | Stun: %d", equipe1->tamanho, equipe1->inicio->jogador.stunTicks),
              margem, margem + 150, 16, equipe1->inicio->jogador.stunTicks > 0 ? ORANGE : LIGHTGRAY);
@@ -225,6 +224,39 @@ void desenharMenuPrincipal(Texture2D background) {
     desenharTextoCentralizadoComSombra("Na Vibe do Brega Funk Recifense", cx, 220, 22, COR_AMARELO_ESCURO);
     desenharTextoCentralizadoComSombra("Pressione ENTER para jogar", cx, 380, 24, WHITE);
     desenharTextoCentralizadoComSombra("ESC para sair", cx, 430, 20, COR_CINZA_ESCURO);
+}
+
+void desenharEntradaNomes(Texture2D background, const char *nomeJ1, const char *nomeJ2, int jogadorAtual)
+{
+    int cx = LARGURA_TELA / 2;
+    const char *nomeAtual = jogadorAtual == 1 ? nomeJ1 : nomeJ2;
+    const char *titulo = jogadorAtual == 1 ? "Nome do Jogador 1" : "Nome do Jogador 2";
+    Color corAtual = jogadorAtual == 1 ? BLUE : RED;
+
+    DrawTexturePro(
+        background,
+        (Rectangle){ 0, 0, background.width, background.height },
+        (Rectangle){ 0, 0, LARGURA_TELA, ALTURA_TELA },
+        (Vector2){ 0, 0 }, 0.0f, WHITE
+    );
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(BLACK, 0.62f));
+
+    DrawRectangleRounded((Rectangle){330, 150, 620, 380}, 0.05f, 10, Fade(BLACK, 0.82f));
+    DrawRectangleRoundedLines((Rectangle){330, 150, 620, 380}, 0.05f, 10, Fade(corAtual, 0.85f));
+
+    desenharTextoCentralizadoComSombra("IDENTIFICACAO DOS JOGADORES", cx, 185, 28, WHITE);
+    desenharTextoCentralizadoComSombra(titulo, cx, 250, 30, corAtual);
+
+    DrawRectangleRounded((Rectangle){420, 315, 440, 58}, 0.08f, 8, Fade(DARKGRAY, 0.92f));
+    DrawRectangleRoundedLines((Rectangle){420, 315, 440, 58}, 0.08f, 8, Fade(WHITE, 0.6f));
+    desenharTextoCentralizadoComSombra(nomeAtual[0] != '\0' ? nomeAtual : "Digite o nome",
+                                       cx, 331, 24, nomeAtual[0] != '\0' ? WHITE : GRAY);
+
+    desenharTextoCentralizadoComSombra("ENTER confirma | BACKSPACE apaga", cx, 430, 20, LIGHTGRAY);
+    desenharTextoCentralizadoComSombra(TextFormat("%s  x  %s",
+                                       nomeJ1[0] != '\0' ? nomeJ1 : "Jogador 1",
+                                       nomeJ2[0] != '\0' ? nomeJ2 : "Jogador 2"),
+                                       cx, 475, 22, WHITE);
 }
 
 static void desenharRetratoSelecao(const FighterAssets *assets, Rectangle destino, Color corFallback, const char *rotulo)
@@ -418,11 +450,45 @@ void desenharResultadoRound(Jogador *vencedor, Estatistica *stats, int totalStat
 /*
  * Desenha a tela final de vitória da partida.
  */
-void desenharTelaVitoria(Jogador *vencedor) {
+static void desenharEscolhaVitoria(const char *nome, int x, int y, Color cor,
+                                   OpcaoPosPartida escolha, int confirmado)
+{
+    DrawRectangleRounded((Rectangle){x, y, 390, 245}, 0.05f, 10, Fade(BLACK, 0.82f));
+    DrawRectangleRoundedLines((Rectangle){x, y, 390, 245}, 0.05f, 10, Fade(cor, 0.75f));
+    desenharTextoCentralizadoComSombra(nome, x + 195, y + 24, 26, cor);
+
+    for (int i = 0; i < TOTAL_OPCOES_POS_PARTIDA; i++)
+    {
+        int opcaoY = y + 76 + i * 48;
+        Color textoCor = i == escolha ? WHITE : LIGHTGRAY;
+
+        if (i == escolha)
+        {
+            DrawRectangleRounded((Rectangle){x + 34, opcaoY - 8, 322, 36}, 0.12f, 8, Fade(cor, 0.35f));
+            desenharTextoComSombra(">", x + 48, opcaoY, 20, WHITE);
+        }
+
+        desenharTextoComSombra(textoOpcaoPosPartida((OpcaoPosPartida)i), x + 82, opcaoY, 20, textoCor);
+    }
+
+    desenharTextoCentralizadoComSombra(confirmado ? "CONFIRMADO" : "Escolha uma opcao",
+                                       x + 195, y + 212, 18, confirmado ? GREEN : GRAY);
+}
+
+void desenharTelaVitoria(Jogador *vencedor, const char *nomeJ1, const char *nomeJ2,
+                         OpcaoPosPartida escolhaJ1, OpcaoPosPartida escolhaJ2,
+                         int confirmouJ1, int confirmouJ2) {
     ClearBackground(BLACK);
     char msg[80];
     sprintf(msg, "%s E O REI DO PASSINHO!", vencedor->personagem.nome);
-    DrawText(msg, LARGURA_TELA / 2 - MeasureText(msg, 34) / 2, 250, 34, GOLD);
-    DrawText("Pressione ENTER para jogar novamente", LARGURA_TELA / 2 - 220, 380, 22, WHITE);
-    DrawText("ESC para sair", LARGURA_TELA / 2 - 70, 420, 22, GRAY);
+    DrawText(msg, LARGURA_TELA / 2 - MeasureText(msg, 34) / 2, 70, 34, GOLD);
+
+    desenharEscolhaVitoria(nomeJ1, 210, 170, BLUE, escolhaJ1, confirmouJ1);
+    desenharEscolhaVitoria(nomeJ2, 680, 170, RED, escolhaJ2, confirmouJ2);
+
+    desenharTextoCentralizadoComSombra("J1: W/S e ENTER | J2: SETAS e L ou SHIFT DIR",
+                                       LARGURA_TELA / 2, 470, 20, WHITE);
+    desenharTextoCentralizadoComSombra("Prioridade: Menu > Trocar Lutadores > Reiniciar",
+                                       LARGURA_TELA / 2, 510, 18, GRAY);
+    desenharTextoCentralizadoComSombra("ESC para sair", LARGURA_TELA / 2, 550, 18, GRAY);
 }
