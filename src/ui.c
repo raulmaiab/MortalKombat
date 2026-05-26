@@ -77,9 +77,7 @@ static const char *textoOpcaoPosPartida(OpcaoPosPartida opcao)
     }
 }
 
-/*
- * Desenha o HUD completo: barras de HP, energia, placar de rounds e round atual.
- */
+
 
 void carregarCenarios() {
     bgMarcoZero = LoadTexture("assets/backgrounds/marco_zero.jpg");
@@ -145,102 +143,31 @@ static void desenharBarraPersonagemEquipe(const NoPersonagem *no, int x, int y, 
 
 static void desenharHUDJogador(const EquipeJogador *equipe, int x, int y, Color cor, int alinhadoDireita)
 {
-    if (equipe == NULL)
-        return;
-
+    int reservaY = y;
     int reservasDesenhadas = 0;
 
     for (int i = 0; i < TAM_EQUIPE; i++)
     {
-        const NoPersonagem *no = &equipe->membros[i];
-
-        /* ignora slot vazio */
-        if (no->indicePersonagem < 0)
+        const NoPersonagem *no = &equipe->personagens.membros[i];
+        if (no == equipe->personagens.inicio)
             continue;
 
-        /* ignora personagem ativo */
-        if (no == equipe->inicio)
-            continue;
-
-        desenharBarraPersonagemEquipe(
-            no,
-            x,
-            y + reservasDesenhadas * 30,
-            300,
-            22,
-            cor,
-            alinhadoDireita,
-            0
-        );
-
+        desenharBarraPersonagemEquipe(no, x, reservaY + reservasDesenhadas * 30, 300, 22, cor, alinhadoDireita, 0);
         reservasDesenhadas++;
     }
 
-    /* PERSONAGEM ATIVO */
-    if (equipe->inicio != NULL &&
-        equipe->inicio->indicePersonagem >= 0)
+    if (equipe->personagens.inicio != NULL)
     {
-        const NoPersonagem *ativo = equipe->inicio;
-
-        desenharBarraPersonagemEquipe(
-            ativo,
-            x,
-            y + 64,
-            400,
-            28,
-            cor,
-            alinhadoDireita,
-            1
-        );
-
-        int barraX = alinhadoDireita ? x + 120 : x;
-
-        DrawRectangle(
-            barraX,
-            y + 112,
-            200,
-            15,
-            DARKGRAY
-        );
-
+        const NoPersonagem *ativo = equipe->personagens.inicio;
+        desenharBarraPersonagemEquipe(ativo, x, y + 64, 400, 28, cor, alinhadoDireita, 1);
+        DrawRectangle(x + (alinhadoDireita ? 120 : 0), y + 112, 200, 15, DARKGRAY);
         int energia = ativo->jogador.energia * 200 / MAX_ENERGIA;
-
         if (alinhadoDireita)
-        {
-            DrawRectangle(
-                barraX + (200 - energia),
-                y + 112,
-                energia,
-                15,
-                COR_ENERGIA
-            );
-        }
+            DrawRectangle(x + 120 + (200 - energia), y + 112, energia, 15, COR_ENERGIA);
         else
-        {
-            DrawRectangle(
-                barraX,
-                y + 112,
-                energia,
-                15,
-                COR_ENERGIA
-            );
-        }
-
-        DrawRectangleLines(
-            barraX,
-            y + 112,
-            200,
-            15,
-            WHITE
-        );
-
-        DrawText(
-            TextFormat("Energia: %d%%", ativo->jogador.energia),
-            barraX,
-            y + 132,
-            16,
-            WHITE
-        );
+            DrawRectangle(x, y + 112, energia, 15, COR_ENERGIA);
+        DrawText(TextFormat("Energia: %d%%", ativo->jogador.energia),
+                 x + (alinhadoDireita ? 120 : 0), y + 130, 16, WHITE);
     }
 }
 
@@ -253,14 +180,14 @@ void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2,
 
     desenharTextoCentralizadoComSombra(TextFormat("%s  x  %s", nomeJ1, nomeJ2),
                                        LARGURA_TELA / 2, margem, 22, WHITE);
-    if (equipe1->inicio == NULL || equipe2->inicio == NULL)
+    if (equipe1->personagens.inicio == NULL || equipe2->personagens.inicio == NULL)
         return;
 
-    DrawText(TextFormat("Stun: %d", equipe1->inicio->jogador.stunTicks),
-             margem, margem + 150, 16, equipe1->inicio->jogador.stunTicks > 0 ? ORANGE : LIGHTGRAY);
-    DrawText(TextFormat("Stun: %d", equipe2->inicio->jogador.stunTicks),
+    DrawText(TextFormat("Stun: %d", equipe1->personagens.inicio->jogador.stunTicks),
+             margem, margem + 150, 16, equipe1->personagens.inicio->jogador.stunTicks > 0 ? ORANGE : LIGHTGRAY);
+    DrawText(TextFormat("Stun: %d", equipe2->personagens.inicio->jogador.stunTicks),
              LARGURA_TELA - margem - 190, margem + 150, 16,
-             equipe2->inicio->jogador.stunTicks > 0 ? ORANGE : LIGHTGRAY);
+             equipe2->personagens.inicio->jogador.stunTicks > 0 ? ORANGE : LIGHTGRAY);
 }
 
 /*
@@ -495,31 +422,6 @@ void desenharSelecaoPersonagem(const int selecoesJ1[], int slotAtualJ1, int conf
 }
 
 /*
- * Desenha a tela de resultado do round com estatísticas ordenadas.
- */
-void desenharResultadoRound(Jogador *vencedor, Estatistica *stats, int totalStats) {
-    ClearBackground(BLACK);
-
-    char titulo[80];
-    if (vencedor != NULL)
-        snprintf(titulo, sizeof(titulo), "%s VENCEU O ROUND!", vencedor->personagem.nome);
-    else
-        snprintf(titulo, sizeof(titulo), "ROUND EMPATADO!");
-    DrawText(titulo, LARGURA_TELA / 2 - MeasureText(titulo, 30) / 2, 100, 30, YELLOW);
-    DrawText("ESTATISTICAS", LARGURA_TELA / 2 - 80, 180, 26, WHITE);
-
-    for (int i = 0; i < totalStats; i++) {
-        int y = 230 + i * 100;
-        DrawText(stats[i].nomePersonagem, 200, y,      22, i == 0 ? GOLD : LIGHTGRAY);
-        DrawText(TextFormat("Dano: %d",    stats[i].danoTotal),          200, y + 28, 18, WHITE);
-        DrawText(TextFormat("Combos: %d",  stats[i].combosExecutados),   200, y + 50, 18, WHITE);
-        DrawText(TextFormat("Esquivas: %d",stats[i].esquivasRealizadas), 200, y + 72, 18, WHITE);
-    }
-
-    DrawText("Pressione ENTER para continuar", LARGURA_TELA / 2 - 180, ALTURA_TELA - 80, 22, GRAY);
-}
-
-/*
  * Desenha a tela final de vitória da partida.
  */
 static void desenharEscolhaVitoria(const char *nome, int x, int y, Color cor,
@@ -532,9 +434,9 @@ static void desenharEscolhaVitoria(const char *nome, int x, int y, Color cor,
     for (int i = 0; i < TOTAL_OPCOES_POS_PARTIDA; i++)
     {
         int opcaoY = y + 76 + i * 48;
-        Color textoCor = i == escolha ? WHITE : LIGHTGRAY;
+        Color textoCor = i == (int)escolha ? WHITE : LIGHTGRAY;
 
-        if (i == escolha)
+        if (i == (int)escolha)
         {
             DrawRectangleRounded((Rectangle){x + 34, opcaoY - 8, 322, 36}, 0.12f, 8, Fade(cor, 0.35f));
             desenharTextoComSombra(">", x + 48, opcaoY, 20, WHITE);
@@ -549,7 +451,8 @@ static void desenharEscolhaVitoria(const char *nome, int x, int y, Color cor,
 
 void desenharTelaVitoria(Jogador *vencedor, const char *nomeJ1, const char *nomeJ2,
                          OpcaoPosPartida escolhaJ1, OpcaoPosPartida escolhaJ2,
-                         int confirmouJ1, int confirmouJ2) {
+                         int confirmouJ1, int confirmouJ2,
+                         const RegistroRanking ranking[], int totalRanking) {
     ClearBackground(BLACK);
     char msg[80];
     sprintf(msg, "%s E O REI DO PASSINHO!", vencedor->personagem.nome);
@@ -563,4 +466,11 @@ void desenharTelaVitoria(Jogador *vencedor, const char *nomeJ1, const char *nome
     desenharTextoCentralizadoComSombra("Prioridade: Menu > Trocar Lutadores > Reiniciar",
                                        LARGURA_TELA / 2, 510, 18, GRAY);
     desenharTextoCentralizadoComSombra("ESC para sair", LARGURA_TELA / 2, 550, 18, GRAY);
+
+    DrawText("RANKING GERAL", 520, 590, 22, GOLD);
+    for (int i = 0; i < totalRanking && i < 3; i++)
+    {
+        DrawText(TextFormat("%d. %s - %d vitorias", i + 1, ranking[i].nomeJogador, ranking[i].vitorias),
+                 500, 620 + i * 24, 18, WHITE);
+    }
 }

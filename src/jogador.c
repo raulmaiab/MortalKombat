@@ -8,10 +8,10 @@
 Personagem getPersonagem(IndicePersonagem indice)
 {
     Personagem personagens[TOTAL_PERSONAGENS] = {
-        /* Nome              hpMax  dNormal dBaixo  dEsp  vel */
-        {"Alirio", 90, 9, 16, 28, 8},
-        {"Anderson Neiff", 100, 10, 18, 35, 6},
-        {"Ariano Suassuna", 100, 9, 16, 32, 7},
+        /* Nome              hpMax  dNormal dEsp  vel */
+        {"Alirio", 90, 9, 28, 8},
+        {"Anderson Neiff", 100, 10, 35, 6},
+        {"Tojal", 100, 9, 32, 7},
     };
     return personagens[indice];
 }
@@ -36,17 +36,14 @@ void inicializarJogador(Jogador *jogador, IndicePersonagem indice, float posX, f
     jogador->defendendo = 0;
     jogador->agachado = 0;
     jogador->ataqueAgachadoTicks = 0;
-    jogador->esquivaTicks = 0;
-    jogador->esquivaCooldown = 0;
     jogador->attackTicks = 0;
     jogador->stateTicks = 0;
     jogador->olhandoDireita = olhandoDireita;
     jogador->state = IDLE;
-    inicializarFila(&jogador->fila);
 }
 
 /*
- * Reseta HP, energia e fila para o próximo round.
+ * Reseta HP e energia para o próximo round.
  * Mantém personagem escolhido e rounds vencidos.
  */
 void resetarJogador(Jogador *jogador)
@@ -61,10 +58,7 @@ void resetarJogador(Jogador *jogador)
     jogador->defendendo = 0;
     jogador->agachado = 0;
     jogador->ataqueAgachadoTicks = 0;
-    jogador->esquivaTicks = 0;
-    jogador->esquivaCooldown = 0;
     jogador->attackTicks = 0;
     jogador->stateTicks = 0;
     jogador->state = IDLE;
-    limparFila(&jogador->fila);
 }

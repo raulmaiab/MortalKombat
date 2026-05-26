@@ -1,8 +1,6 @@
 #ifndef JOGADOR_H
 #define JOGADOR_H
 
-#include "fila.h"
-
 #define MAX_HP 100
 #define MAX_ENERGIA 100
 #define MAX_NOME 50
@@ -27,7 +25,6 @@ typedef struct
     char nome[MAX_NOME];
     int hpMaximo;
     int danoNormal;
-    int danoBaixo;
     int danoEspecial;
     int velocidade; /* influencia o tick de processamento */
 } Personagem;
@@ -36,10 +33,9 @@ typedef struct
 typedef struct
 {
     Personagem personagem;
-    FilaPassinhos fila; /* fila de inputs — ED central */
     int hp;
     int energia;
-    int stunTicks;       /* trava movimento e limpa fila ao levar dano */
+    int stunTicks;
     int ultimoGolpeTick; /* último tick em que o jogador levou dano */
     int golpesSeguidos;  /* contador de hits rápidos para hitstun */
     int roundsVencidos;
@@ -50,22 +46,11 @@ typedef struct
     int defendendo;
     int agachado;
     int ataqueAgachadoTicks;
-    int esquivaTicks;
-    int esquivaCooldown;
     int attackTicks;
     int stateTicks;
     int olhandoDireita;
     PlayerState state;
 } Jogador;
-
-/* Estatísticas ao fim de cada round */
-typedef struct
-{
-    char nomePersonagem[MAX_NOME];
-    int danoTotal;
-    int combosExecutados;
-    int esquivasRealizadas;
-} Estatistica;
 
 /* ---- Personagens disponíveis ---- */
 /* Índices para seleção no menu */
@@ -79,7 +64,7 @@ typedef enum
 
 /* ---- Funções de Jogador ---- */
 void inicializarJogador(Jogador *jogador, IndicePersonagem indice, float posX, float posY, int olhandoDireita);
-void resetarJogador(Jogador *jogador); /* reseta HP/energia/fila para novo round */
+void resetarJogador(Jogador *jogador);
 Personagem getPersonagem(IndicePersonagem indice);
 
 #endif

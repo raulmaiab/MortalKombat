@@ -13,7 +13,7 @@ static float calcularDistancia(const Jogador *a, const Jogador *b)
 
 static void aplicarRecuperacaoAtaque(Jogador *atacante, TipoPassinho passinho)
 {
-    if (passinho == ATAQUE_BAIXO)
+    if (passinho == ATAQUE_AGACHADO)
     {
         if (atacante->ataqueAgachadoTicks < RECUPERACAO_ATAQUE_TICKS)
             atacante->ataqueAgachadoTicks = RECUPERACAO_ATAQUE_TICKS;
@@ -24,15 +24,15 @@ static void aplicarRecuperacaoAtaque(Jogador *atacante, TipoPassinho passinho)
     }
 }
 
-static int ataqueBaixo(TipoPassinho passinho)
+static int ataqueAgachado(TipoPassinho passinho)
 {
-    return passinho == ATAQUE_BAIXO;
+    return passinho == ATAQUE_AGACHADO;
 }
 
 static int ataqueValido(TipoPassinho passinho)
 {
     return passinho == ATAQUE_NORMAL ||
-           passinho == ATAQUE_BAIXO ||
+           passinho == ATAQUE_AGACHADO ||
            passinho == ATAQUE_ESPECIAL;
 }
 
@@ -55,7 +55,7 @@ static int calcularDanoPercentual(const Jogador *alvo, int percentual)
  * Processa um passinho atacante contra o alvo.
  * Verifica distância, energia e stun antes de aplicar dano.
  */
-void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, Estatistica *stats, int tickAtual)
+void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, int tickAtual)
 {
     if (atacante->stunTicks > 0)
         return;
@@ -69,7 +69,7 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
         custo = energiaConsumida[0];
         dano = calcularDanoPercentual(alvo, DANO_NORMAL_PERCENTUAL);
         break;
-    case ATAQUE_BAIXO:
+    case ATAQUE_AGACHADO:
         custo = energiaConsumida[1];
         dano = calcularDanoPercentual(alvo, DANO_NORMAL_PERCENTUAL);
         break;
@@ -98,24 +98,21 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
             atacante->energia = 0;
     }
 
-    if (!ataqueBaixo(passinho) && (alvo->agachado || alvo->ataqueAgachadoTicks > 0))
+    if (!ataqueAgachado(passinho) && (alvo->agachado || alvo->ataqueAgachadoTicks > 0))
     {
-        stats[1].esquivasRealizadas++;
         return;
     }
 
-    if (ataqueBaixo(passinho) && !alvo->noChao)
+    if (ataqueAgachado(passinho) && !alvo->noChao)
     {
-        stats[1].esquivasRealizadas++;
         return;
     }
 
-    if (!ataqueBaixo(passinho) && alvo->defendendo && alvo->noChao && defesaDeFrente(alvo, atacante))
+    if (!ataqueAgachado(passinho) && alvo->defendendo && alvo->noChao && defesaDeFrente(alvo, atacante))
     {
         adicionarEnergia(atacante, GANHO_ENERGIA_DEFESA);
         aplicarRecuperacaoAtaque(atacante, passinho);
         alvo->stunTicks = BLOCKSTUN_TICKS;
-        limparFila(&alvo->fila);
         alvo->ultimoGolpeTick = tickAtual;
         return;
     }
@@ -126,36 +123,9 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
 
     adicionarEnergia(atacante, GANHO_ENERGIA_ACERTO);
     aplicarRecuperacaoAtaque(atacante, passinho);
-    stats[0].danoTotal += dano;
     alvo->stunTicks = STUN_TICKS_PADRAO;
-    limparFila(&alvo->fila);
     alvo->ultimoGolpeTick = tickAtual;
     alvo->golpesSeguidos = 0;
-}
-
-/*
- * Verifica se a sequência atual da fila corresponde a algum combo.
- * Retorna 1 se combo encontrado, 0 caso contrário.
- * A fila deve estar cheia (tamanho 3) antes de chamar essa função.
- */
-int verificarCombo(FilaPassinhos *fila, Combo *combosPersonagem, int totalCombos)
-{
-    for (int i = 0; i < totalCombos; i++)
-    {
-        int comboBateu = 1;
-        for (int j = 0; j < TAM_MAX_FILA; j++)
-        {
-            int idx = (fila->inicio + j) % TAM_MAX_FILA;
-            if (fila->elementos[idx] != combosPersonagem[i].sequencia[j])
-            {
-                comboBateu = 0;
-                break;
-            }
-        }
-        if (comboBateu)
-            return 1;
-    }
-    return 0;
 }
 
 /*
@@ -190,11 +160,9 @@ int verificarVencedor(Jogador *jogador1, Jogador *jogador2)
 }
 
 /*
- * Encerra o round: incrementa rounds vencidos e limpa filas.
+ * Encerra o round: incrementa rounds vencidos.
  */
-void encerrarRound(Jogador *vencedor, Estatistica *stats)
+void encerrarRound(Jogador *vencedor)
 {
-    (void)stats;
     vencedor->roundsVencidos++;
-    limparFila(&vencedor->fila);
 }

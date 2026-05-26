@@ -1,10 +1,15 @@
 #ifndef ORDENACAO_H
 #define ORDENACAO_H
 
-#include "jogador.h"
+#define MAX_NOME_RANKING 32
 
-/* ---- Funções de Ordenação ---- */
-void ordenarEstatisticas(Estatistica *stats, int n);  /* Insertion Sort por danoTotal */
-void exibirEstatisticas(Estatistica *stats, int n);
+typedef struct
+{
+    char nomeJogador[MAX_NOME_RANKING];
+    int vitorias;
+} RegistroRanking;
+
+void ordenarRankingPorVitorias(RegistroRanking ranking[], int total);
+void registrarVitoriaRanking(RegistroRanking ranking[], int *total, int capacidade, const char *nomeJogador);
 
 #endif

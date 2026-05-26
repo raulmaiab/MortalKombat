@@ -16,10 +16,6 @@ static void atualizarTimers(Jogador *jogador)
 {
     if (jogador->stunTicks > 0)
         jogador->stunTicks--;
-    if (jogador->esquivaTicks > 0)
-        jogador->esquivaTicks--;
-    if (jogador->esquivaCooldown > 0)
-        jogador->esquivaCooldown--;
     if (jogador->attackTicks > 0)
         jogador->attackTicks--;
     if (jogador->ataqueAgachadoTicks > 0)
@@ -114,9 +110,8 @@ TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls co
     jogador->agachado = jogador->hp > 0 &&
                         jogador->stunTicks == 0 &&
                         jogador->noChao &&
-                        IsKeyDown(controles.esquiva);
+                        IsKeyDown(controles.agachar);
     jogador->defendendo = jogador->stunTicks == 0 &&
-                          jogador->esquivaTicks == 0 &&
                           jogador->noChao &&
                           !jogador->agachado &&
                           (IsKeyDown(controles.defesa) ||
@@ -128,10 +123,9 @@ TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls co
         {
             if (keyPressedAlternativo(controles.ataqueNormal, controles.ataqueNormalAlternativo))
             {
-                int custo = jogador->agachado ? energiaConsumida[1] : energiaConsumida[0];
-                if (jogador->energia >= custo)
+                if (jogador->energia >= energiaConsumida[jogador->agachado ? 1 : 0])
                 {
-                    ataqueSolicitado = jogador->agachado ? ATAQUE_BAIXO : ATAQUE_NORMAL;
+                    ataqueSolicitado = jogador->agachado ? ATAQUE_AGACHADO : ATAQUE_NORMAL;
                     jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
                     jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
                 }
@@ -149,7 +143,7 @@ TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls co
         }
 
         if (!jogador->agachado && jogador->attackTicks == 0 &&
-            jogador->ataqueAgachadoTicks == 0 && jogador->esquivaTicks == 0)
+            jogador->ataqueAgachadoTicks == 0)
         {
             float velocidade = jogador->defendendo ? VELOCIDADE_DEFESA : VELOCIDADE_MOVIMENTO;
 
@@ -243,11 +237,8 @@ void resetPlayerPosition(Jogador *jogador, float posX, float posY, int olhandoDi
     jogador->defendendo = 0;
     jogador->agachado = 0;
     jogador->ataqueAgachadoTicks = 0;
-    jogador->esquivaTicks = 0;
-    jogador->esquivaCooldown = 0;
     jogador->attackTicks = 0;
     jogador->stateTicks = 0;
     jogador->olhandoDireita = olhandoDireita;
     jogador->state = IDLE;
-    limparFila(&jogador->fila);
 }

@@ -1,32 +1,35 @@
 #ifndef FILA_H
 #define FILA_H
 
-#define TAM_MAX_FILA 3
+#include "jogador.h"
+#include "selecao_personagens.h"
 
-/* Tipos de passinho/ação que o jogador pode executar */
-typedef enum {
-    PASSINHO_NENHUM = -1,
-    ATAQUE_NORMAL,
-    ATAQUE_BAIXO,
-    ATAQUE_ESPECIAL,
-    ESQUIVA
-} TipoPassinho;
+typedef struct NoPersonagem
+{
+    Jogador jogador;
+    IndicePersonagem indicePersonagem;
+    int vivo;
+    struct NoPersonagem *next;
+} NoPersonagem;
 
-/* Fila circular de inputs do jogador (ED central do jogo) */
-typedef struct {
-    TipoPassinho elementos[TAM_MAX_FILA];
-    int inicio;
-    int fim;
+typedef struct
+{
+    NoPersonagem membros[TAM_EQUIPE];
+    NoPersonagem *inicio;
+    NoPersonagem *fim;
     int tamanho;
-} FilaPassinhos;
+    int total;
+} FilaPersonagens;
 
-/* ---- Funções da Fila ---- */
-void inicializarFila(FilaPassinhos *fila);
-void enfileirarPassinho(FilaPassinhos *fila, TipoPassinho passinho);
-TipoPassinho desenfileirarPassinho(FilaPassinhos *fila);
-TipoPassinho peekFila(FilaPassinhos *fila);
-int filaVazia(FilaPassinhos *fila);
-int filaCheia(FilaPassinhos *fila);
-void limparFila(FilaPassinhos *fila);
+void inicializarFilaPersonagens(FilaPersonagens *fila);
+int enfileirarPersonagem(FilaPersonagens *fila, IndicePersonagem indicePersonagem);
+NoPersonagem *noPersonagemAtivo(FilaPersonagens *fila);
+const NoPersonagem *noPersonagemAtivoConst(const FilaPersonagens *fila);
+int indicePersonagemAtivo(const FilaPersonagens *fila);
+int tamanhoFilaPersonagens(const FilaPersonagens *fila);
+int filaPersonagensTemVivos(const FilaPersonagens *fila);
+int filaPersonagensPodeRotacionar(const FilaPersonagens *fila);
+void rotacionarFilaPersonagens(FilaPersonagens *fila);
+void removerPersonagemAtivo(FilaPersonagens *fila);
 
 #endif
