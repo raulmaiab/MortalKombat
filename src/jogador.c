@@ -11,7 +11,7 @@ Personagem getPersonagem(IndicePersonagem indice)
         /* Nome              hpMax  dNormal dBaixo  dEsp  vel */
         {"Alirio", 90, 9, 16, 28, 8},
         {"Anderson Neiff", 100, 10, 18, 35, 6},
-        {"Tojal", 100, 9, 16, 32, 7},
+        {"Ariano Suassuna", 100, 9, 16, 32, 7},
     };
     return personagens[indice];
 }

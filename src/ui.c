@@ -145,30 +145,102 @@ static void desenharBarraPersonagemEquipe(const NoPersonagem *no, int x, int y, 
 
 static void desenharHUDJogador(const EquipeJogador *equipe, int x, int y, Color cor, int alinhadoDireita)
 {
-    int reservaY = y;
+    if (equipe == NULL)
+        return;
+
     int reservasDesenhadas = 0;
 
     for (int i = 0; i < TAM_EQUIPE; i++)
     {
         const NoPersonagem *no = &equipe->membros[i];
-        if (&equipe->membros[i] == equipe->inicio)
+
+        /* ignora slot vazio */
+        if (no->indicePersonagem < 0)
             continue;
 
-        desenharBarraPersonagemEquipe(no, x, reservaY + reservasDesenhadas * 30, 300, 22, cor, alinhadoDireita, 0);
+        /* ignora personagem ativo */
+        if (no == equipe->inicio)
+            continue;
+
+        desenharBarraPersonagemEquipe(
+            no,
+            x,
+            y + reservasDesenhadas * 30,
+            300,
+            22,
+            cor,
+            alinhadoDireita,
+            0
+        );
+
         reservasDesenhadas++;
     }
 
-    if (equipe->inicio != NULL)
+    /* PERSONAGEM ATIVO */
+    if (equipe->inicio != NULL &&
+        equipe->inicio->indicePersonagem >= 0)
     {
-        desenharBarraPersonagemEquipe(equipe->inicio, x, y + 64, 400, 28, cor, alinhadoDireita, 1);
-        DrawRectangle(x + (alinhadoDireita ? 120 : 0), y + 112, 200, 15, DARKGRAY);
-        int energia = equipe->inicio->jogador.energia * 200 / MAX_ENERGIA;
+        const NoPersonagem *ativo = equipe->inicio;
+
+        desenharBarraPersonagemEquipe(
+            ativo,
+            x,
+            y + 64,
+            400,
+            28,
+            cor,
+            alinhadoDireita,
+            1
+        );
+
+        int barraX = alinhadoDireita ? x + 120 : x;
+
+        DrawRectangle(
+            barraX,
+            y + 112,
+            200,
+            15,
+            DARKGRAY
+        );
+
+        int energia = ativo->jogador.energia * 200 / MAX_ENERGIA;
+
         if (alinhadoDireita)
-            DrawRectangle(x + 120 + (200 - energia), y + 112, energia, 15, COR_ENERGIA);
+        {
+            DrawRectangle(
+                barraX + (200 - energia),
+                y + 112,
+                energia,
+                15,
+                COR_ENERGIA
+            );
+        }
         else
-            DrawRectangle(x, y + 112, energia, 15, COR_ENERGIA);
-        DrawText(TextFormat("Energia: %d%%", equipe->inicio->jogador.energia),
-                 x + (alinhadoDireita ? 120 : 0), y + 130, 16, WHITE);
+        {
+            DrawRectangle(
+                barraX,
+                y + 112,
+                energia,
+                15,
+                COR_ENERGIA
+            );
+        }
+
+        DrawRectangleLines(
+            barraX,
+            y + 112,
+            200,
+            15,
+            WHITE
+        );
+
+        DrawText(
+            TextFormat("Energia: %d%%", ativo->jogador.energia),
+            barraX,
+            y + 132,
+            16,
+            WHITE
+        );
     }
 }
 

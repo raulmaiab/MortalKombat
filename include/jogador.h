@@ -71,13 +71,9 @@ typedef struct
 /* Índices para seleção no menu */
 typedef enum
 {
-    JOAO_CAMPOS,
-    MAGRAO,
-    KUKI,
-    GRAFITE,
-    CLARISSE,
+    ANDERSON_NEIFF,
+    ALIRIO,
     ARIANO,
-    TOJAL,
     TOTAL_PERSONAGENS
 } IndicePersonagem;
 

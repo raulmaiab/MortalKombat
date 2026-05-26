@@ -70,8 +70,8 @@ static void iniciarPartida(EquipeJogador *equipe1, EquipeJogador *equipe2, Estat
 
 static void reiniciarSelecoes(SelecaoPersonagens *selecaoJ1, SelecaoPersonagens *selecaoJ2)
 {
-    inicializarSelecaoPersonagens(selecaoJ1, JOAO_CAMPOS);
-    inicializarSelecaoPersonagens(selecaoJ2, GRAFITE);
+    inicializarSelecaoPersonagens(selecaoJ1, ALIRIO);
+    inicializarSelecaoPersonagens(selecaoJ2, ARIANO);
 }
 
 static void preencherNomePadrao(char *nome, int jogador)
