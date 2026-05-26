@@ -10,7 +10,7 @@ void inicializarFilaPersonagens(FilaPersonagens *fila)
 
     for (int i = 0; i < TAM_EQUIPE; i++)
     {
-        fila->membros[i].indicePersonagem = JOAO_CAMPOS;
+        fila->membros[i].indicePersonagem = ALIRIO;
         fila->membros[i].vivo = 0;
         fila->membros[i].next = NULL;
     }
