@@ -5,6 +5,7 @@
 void inicializarEquipe(EquipeJogador *equipe, const int selecoes[], float posX, float posY, int olhandoDireita)
 {
     equipe->roundsVencidos = 0;
+    equipe->olhandoDireitaEntrada = olhandoDireita;
     inicializarFilaPersonagens(&equipe->personagens);
 
     for (int i = 0; i < TAM_EQUIPE; i++)
@@ -51,14 +52,11 @@ void trocarParaProximoPersonagem(EquipeJogador *equipe)
     if (!equipePodeTrocar(equipe))
         return;
 
-    NoPersonagem *antigoAtivo = noPersonagemAtivo(&equipe->personagens);
-    float posX = antigoAtivo->jogador.posX;
-    float posY = antigoAtivo->jogador.posY;
-    int olhandoDireita = antigoAtivo->jogador.olhandoDireita;
+    float posX = equipe->olhandoDireitaEntrada ? 0.0f : (float)(LARGURA_TELA - LARGURA_PERSONAGEM);
 
     rotacionarFilaPersonagens(&equipe->personagens);
 
-    resetPlayerPosition(jogadorAtivo(equipe), posX, posY, olhandoDireita);
+    resetPlayerEntradaPulando(jogadorAtivo(equipe), posX, CHAO_Y, equipe->olhandoDireitaEntrada);
 }
 
 void trocarSeAtivoMorreu(EquipeJogador *equipe)
@@ -67,16 +65,14 @@ void trocarSeAtivoMorreu(EquipeJogador *equipe)
     if (morto == NULL || morto->jogador.hp > 0)
         return;
 
-    float posX = morto->jogador.posX;
-    float posY = morto->jogador.posY;
-    int olhandoDireita = morto->jogador.olhandoDireita;
+    float posX = equipe->olhandoDireitaEntrada ? 0.0f : (float)(LARGURA_TELA - LARGURA_PERSONAGEM);
 
     removerPersonagemAtivo(&equipe->personagens);
 
     if (!equipeTemVivos(equipe))
         return;
 
-    resetPlayerPosition(jogadorAtivo(equipe), posX, posY, olhandoDireita);
+    resetPlayerEntradaPulando(jogadorAtivo(equipe), posX, CHAO_Y, equipe->olhandoDireitaEntrada);
 }
 
 void resetarEquipeParaNovoRound(EquipeJogador *equipe, float posX, float posY, int olhandoDireita)

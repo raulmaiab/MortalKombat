@@ -330,7 +330,7 @@ static void carregarAssetsPersonagem(IndicePersonagem indice, int jogador)
     }
     carregarFallbacksAtuais(assets, pasta);
 
-    assets->portrait = carregarPortrait(pasta);
+    assets->portrait = carregarPortrait(pastaBase);
 }
 
 void carregarAssetsLutadores(void)

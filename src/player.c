@@ -138,13 +138,9 @@ TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls co
         cancelarAtaquePendente(jogador);
 
     jogador->olhandoDireita = oponente->posX > jogador->posX;
-    jogador->agachado = jogador->hp > 0 &&
-                        jogador->stunTicks == 0 &&
-                        jogador->noChao &&
-                        IsKeyDown(controles.agachar);
+    jogador->agachado = 0;
     jogador->defendendo = jogador->stunTicks == 0 &&
                           jogador->noChao &&
-                          !jogador->agachado &&
                           (IsKeyDown(controles.defesa) ||
                            (controles.defesaAlternativa != 0 && IsKeyDown(controles.defesaAlternativa)));
 
@@ -153,17 +149,29 @@ TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls co
         if (!jogador->defendendo && jogador->attackTicks == 0 &&
             jogador->specialAttackTicks == 0 && jogador->ataqueAgachadoTicks == 0)
         {
-            if (keyPressedAlternativo(controles.ataqueNormal, controles.ataqueNormalAlternativo))
+            if (IsKeyPressed(controles.agachar) && jogador->noChao)
             {
-                if (jogador->energia >= energiaConsumida[jogador->agachado ? 1 : 0])
+                if (jogador->energia >= energiaConsumida[1])
                 {
-                    ataqueSolicitado = jogador->agachado ? ATAQUE_AGACHADO : ATAQUE_NORMAL;
+                    ataqueSolicitado = ATAQUE_AGACHADO;
                     registrarAtaquePendente(jogador, ataqueSolicitado);
-                    jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
-                    jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
+                    jogador->attackTicks = 0;
+                    jogador->ataqueAgachadoTicks = CROUCH_ATTACK_STATE_TICKS;
                 }
             }
-            if (keyPressedAlternativo(controles.ataqueEspecial, controles.ataqueEspecialAlternativo))
+            if (ataqueSolicitado == PASSINHO_NENHUM &&
+                keyPressedAlternativo(controles.ataqueNormal, controles.ataqueNormalAlternativo))
+            {
+                if (jogador->energia >= energiaConsumida[0])
+                {
+                    ataqueSolicitado = ATAQUE_NORMAL;
+                    registrarAtaquePendente(jogador, ataqueSolicitado);
+                    jogador->attackTicks = ATTACK_STATE_TICKS;
+                    jogador->ataqueAgachadoTicks = 0;
+                }
+            }
+            if (ataqueSolicitado == PASSINHO_NENHUM &&
+                keyPressedAlternativo(controles.ataqueEspecial, controles.ataqueEspecialAlternativo))
             {
                 int custo = energiaConsumida[2];
                 if (jogador->energia >= custo)
@@ -299,4 +307,13 @@ void resetPlayerPosition(Jogador *jogador, float posX, float posY, int olhandoDi
     jogador->stateTicks = 0;
     jogador->olhandoDireita = olhandoDireita;
     jogador->state = IDLE;
+}
+
+void resetPlayerEntradaPulando(Jogador *jogador, float posX, float posY, int olhandoDireita)
+{
+    resetPlayerPosition(jogador, posX, posY, olhandoDireita);
+    jogador->velY = FORCA_PULO;
+    jogador->noChao = 0;
+    jogador->state = JUMP;
+    jogador->stateTicks = 0;
 }

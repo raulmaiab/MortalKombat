@@ -7,6 +7,7 @@ typedef struct
 {
     FilaPersonagens personagens;
     int roundsVencidos;
+    int olhandoDireitaEntrada;
 } EquipeJogador;
 
 void inicializarEquipe(EquipeJogador *equipe, const int selecoes[], float posX, float posY, int olhandoDireita);
