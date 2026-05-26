@@ -235,10 +235,12 @@ TipoPassinho consumirAtaqueNoFrameDeImpacto(Jogador *jogador)
     return ataque;
 }
 
-static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *anim)
+static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *anim, float escalaRender)
 {
     int frameAtual;
     int ticksPorFrame;
+    float larguraSprite = SPRITE_LARGURA * escalaRender;
+    float alturaSprite = SPRITE_ALTURA * escalaRender;
     Texture2D textura;
     Rectangle origem;
     Rectangle destino;
@@ -263,10 +265,10 @@ static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *
     textura = anim->frames[frameAtual];
     origem = anim->sources[frameAtual];
     destino = (Rectangle){
-        jogador->posX + (LARGURA_PERSONAGEM / 2.0f) - (SPRITE_LARGURA / 2.0f),
-        jogador->posY + ALTURA_PERSONAGEM - SPRITE_ALTURA,
-        SPRITE_LARGURA,
-        SPRITE_ALTURA
+        jogador->posX + (LARGURA_PERSONAGEM / 2.0f) - (larguraSprite / 2.0f),
+        jogador->posY + ALTURA_PERSONAGEM - alturaSprite,
+        larguraSprite,
+        alturaSprite
     };
 
     if (!jogador->olhandoDireita)
@@ -285,7 +287,7 @@ void renderPlayer(const Jogador *jogador, const FighterAssets *assets, Color cor
     const FighterAnimation *anim = getAnimationForState(assets, jogador->state);
 
     if (anim != NULL && anim->totalFrames > 0)
-        renderSpriteAnimado(jogador, anim);
+        renderSpriteAnimado(jogador, anim, assets->escalaRender);
     else
         DrawRectangle(x, y, LARGURA_PERSONAGEM, ALTURA_PERSONAGEM, cor);
 

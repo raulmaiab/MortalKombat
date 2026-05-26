@@ -26,6 +26,7 @@ static void carregarFrameSeExistir(FighterAnimation *anim, const char *path)
         return;
 
     anim->frames[anim->totalFrames] = LoadTexture(path);
+    SetTextureFilter(anim->frames[anim->totalFrames], TEXTURE_FILTER_BILINEAR);
     anim->sources[anim->totalFrames] = (Rectangle){
         0,
         0,
@@ -148,6 +149,7 @@ static int carregarLinhaSpriteSheetArquivo(FighterAnimation *anim, const char *p
 
     image = LoadImage(path);
     sheet = LoadTextureFromImage(image);
+    SetTextureFilter(sheet, TEXTURE_FILTER_BILINEAR);
     carregarLinhaSpriteSheet(anim, sheet, &image, linha, frameDuration);
     UnloadImage(image);
 
@@ -172,6 +174,7 @@ static int carregarSpriteSheetTeste(FighterAssets *assets, const char *pasta)
 
     image = LoadImage(path);
     sheet = LoadTextureFromImage(image);
+    SetTextureFilter(sheet, TEXTURE_FILTER_BILINEAR);
 
     carregarLinhaSpriteSheet(&assets->idle, sheet, &image, 0, 0.13f);
     carregarLinhaSpriteSheet(&assets->walk, sheet, &image, 1, 0.09f);
@@ -315,6 +318,8 @@ static void carregarAssetsPersonagem(IndicePersonagem indice, int jogador)
     FighterAssets *assets = &lutadores[indice][jogador - 1];
     const char *pastaBase = pastaDisponivel(indice);
     const char *pasta = pastaJogador(pastaBase, jogador);
+
+    assets->escalaRender = indice == ALIRIO ? 0.62f : 1.0f;
 
     if (!carregarSpriteSheetTeste(assets, pasta))
     {
