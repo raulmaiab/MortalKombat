@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Iinclude
+CFLAGS = -Wall -Wextra -std=c99 -Iinclude
 LIBS = -lraylib -lopengl32 -lgdi32 -lwinmm
 
 SRC = $(wildcard src/*.c)

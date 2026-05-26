@@ -122,10 +122,10 @@ static int carregarSpriteSheetTeste(FighterAssets *assets, const char *pasta)
     for (int i = 0; i < 8; i++)
         adicionarFrameSpriteSheet(&assets->jump, sheet, i, 2);
 
-    assets->dodge.totalFrames = 0;
-    assets->dodge.frameDuration = 0.08f;
+    assets->lowattack.totalFrames = 0;
+    assets->lowattack.frameDuration = 0.08f;
     for (int i = 0; i < 4; i++)
-        adicionarFrameSpriteSheet(&assets->dodge, sheet, i, 3);
+        adicionarFrameSpriteSheet(&assets->lowattack, sheet, i, 3);
 
     assets->stun.totalFrames = 0;
     assets->stun.frameDuration = 0.10f;
@@ -179,20 +179,30 @@ static void carregarFallbacksAtuais(FighterAssets *assets, const char *pasta)
         carregarFrameSeExistir(&assets->walk, path);
     }
 
+    if (assets->lowattack.totalFrames == 0)
+    {
+        snprintf(path, sizeof(path), "assets/fighters/%s/Agachado_chute.png", pasta);
+        carregarFrameSeExistir(&assets->lowattack, path);
+        snprintf(path, sizeof(path), "assets/fighters/%s/Agachado.png", pasta);
+        carregarFrameSeExistir(&assets->lowattack, path);
+    }
+
     if (assets->defense.totalFrames == 0)
     {
-        snprintf(path, sizeof(path), "assets/fighters/%s/Agachado_esquiva.png", pasta);
+        snprintf(path, sizeof(path), "assets/fighters/%s/Defesa.png", pasta);
+        carregarFrameSeExistir(&assets->defense, path);
+        snprintf(path, sizeof(path), "assets/fighters/%s/defense.png", pasta);
         carregarFrameSeExistir(&assets->defense, path);
         snprintf(path, sizeof(path), "assets/fighters/%s/Agachado.png", pasta);
         carregarFrameSeExistir(&assets->defense, path);
     }
 
-    if (assets->dodge.totalFrames == 0 && assets->defense.totalFrames > 0)
+    if (assets->lowattack.totalFrames == 0 && assets->defense.totalFrames > 0)
     {
-        assets->dodge.frames[0] = assets->defense.frames[0];
-        assets->dodge.sources[0] = assets->defense.sources[0];
-        assets->dodge.totalFrames = 1;
-        assets->dodge.frameDuration = 0.08f;
+        assets->lowattack.frames[0] = assets->defense.frames[0];
+        assets->lowattack.sources[0] = assets->defense.sources[0];
+        assets->lowattack.totalFrames = 1;
+        assets->lowattack.frameDuration = 0.08f;
     }
 
     if (assets->jump.totalFrames == 0)
@@ -240,7 +250,7 @@ static void carregarFallbacksAtuais(FighterAssets *assets, const char *pasta)
     }
 }
 
-static Texture2D carregarPortrait(const FighterAssets *assets, const char *pasta)
+static Texture2D carregarPortrait(const char *pasta)
 {
     char path[160];
 
@@ -262,7 +272,7 @@ static void carregarAssetsPersonagem(IndicePersonagem indice, int jogador)
         carregarAnimacaoPadrao(&assets->idle, pasta, "idle", 0.16f);
         carregarAnimacaoPadrao(&assets->walk, pasta, "walk", 0.10f);
         carregarAnimacaoPadrao(&assets->jump, pasta, "jump", 0.12f);
-        carregarAnimacaoPadrao(&assets->dodge, pasta, "dodge", 0.08f);
+        carregarAnimacaoPadrao(&assets->lowattack, pasta, "lowattack", 0.08f);
         carregarAnimacaoPadrao(&assets->defense, pasta, "defense", 0.12f);
         carregarAnimacaoPadrao(&assets->attack, pasta, "attack", 0.08f);
         carregarAnimacaoPadrao(&assets->stun, pasta, "stun", 0.14f);
@@ -270,7 +280,7 @@ static void carregarAssetsPersonagem(IndicePersonagem indice, int jogador)
         carregarFallbacksAtuais(assets, pasta);
     }
 
-    assets->portrait = carregarPortrait(assets, pasta);
+    assets->portrait = carregarPortrait(pasta);
 }
 
 void carregarAssetsLutadores(void)
@@ -294,7 +304,7 @@ void descarregarAssetsLutadores(void)
             FighterAssets *assets = &lutadores[i][j];
             FighterAnimation *animacoes[] = {
                 &assets->idle, &assets->walk, &assets->jump,
-                &assets->dodge, &assets->defense, &assets->attack,
+                &assets->lowattack, &assets->defense, &assets->attack,
                 &assets->stun, &assets->knockdown
             };
 
@@ -366,7 +376,7 @@ const FighterAnimation *getAnimationForState(const FighterAssets *assets, Player
     case JUMP:
         return &assets->jump;
     case CROUCH:
-        return &assets->dodge;
+        return &assets->lowattack;
     case DEFENSE:
         return &assets->defense;
     case ATTACK:

@@ -1,23 +1,11 @@
 #ifndef EQUIPE_H
 #define EQUIPE_H
 
-#include "jogador.h"
-#include "selecao_personagens.h"
-
-typedef struct NoPersonagem
-{
-    Jogador jogador;
-    int indicePersonagem;
-    int vivo;
-    struct NoPersonagem *next;
-} NoPersonagem;
+#include "fila.h"
 
 typedef struct
 {
-    NoPersonagem membros[TAM_EQUIPE];
-    NoPersonagem *inicio;
-    NoPersonagem *fim;
-    int tamanho;
+    FilaPersonagens personagens;
     int roundsVencidos;
 } EquipeJogador;
 

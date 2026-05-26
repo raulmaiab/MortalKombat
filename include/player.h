@@ -11,9 +11,6 @@
 #define FORCA_PULO -14.0f
 #define VELOCIDADE_MOVIMENTO 4.0f
 #define VELOCIDADE_DEFESA 2.0f
-#define ESQUIVA_TICKS 20
-#define ESQUIVA_COOLDOWN_TICKS 45
-#define ESQUIVA_DISTANCIA 70.0f
 #define ATTACK_STATE_TICKS RECUPERACAO_ATAQUE_TICKS
 #define CROUCH_ATTACK_STATE_TICKS RECUPERACAO_ATAQUE_TICKS
 #define CHAO_Y (ALTURA_TELA - ALTURA_PERSONAGEM)
@@ -25,7 +22,7 @@ typedef struct
     int pulo;
     int defesa;
     int defesaAlternativa;
-    int esquiva;
+    int agachar;
     int ataqueNormal;
     int ataqueNormalAlternativo;
     int ataqueEspecial;

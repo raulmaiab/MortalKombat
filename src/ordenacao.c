@@ -1,39 +1,44 @@
 #include "ordenacao.h"
-#include <stdio.h>
+#include <string.h>
 
 /*
- * Ordena o array de estatísticas por danoTotal (decrescente).
- * Algoritmo: Insertion Sort.
- * Chamada ao fim de cada round para exibir resultado.
- *
- * Justificativa: array sempre pequeno (2 jogadores),
- * Insertion Sort é eficiente para n pequeno e simples de implementar em C.
+ * Ordena o ranking geral por vitórias acumuladas em ordem decrescente.
+ * Algoritmo exigido para o projeto: Insertion Sort.
  */
-void ordenarEstatisticas(Estatistica *stats, int n) {
-    for (int i = 1; i < n; i++) {
-        Estatistica chave = stats[i];
+void ordenarRankingPorVitorias(RegistroRanking ranking[], int total)
+{
+    for (int i = 1; i < total; i++)
+    {
+        RegistroRanking chave = ranking[i];
         int j = i - 1;
 
-        /* Move elementos maiores para frente (ordem decrescente) */
-        while (j >= 0 && stats[j].danoTotal < chave.danoTotal) {
-            stats[j + 1] = stats[j];
+        while (j >= 0 && ranking[j].vitorias < chave.vitorias)
+        {
+            ranking[j + 1] = ranking[j];
             j--;
         }
-        stats[j + 1] = chave;
+        ranking[j + 1] = chave;
     }
 }
 
-/*
- * Exibe as estatísticas ordenadas no terminal.
- * Versão texto — pode ser substituída pela versão Raylib em ui.c.
- */
-void exibirEstatisticas(Estatistica *stats, int n) {
-    printf("\n===== RESULTADO DO ROUND =====\n");
-    for (int i = 0; i < n; i++) {
-        printf("%d. %s\n",          i + 1, stats[i].nomePersonagem);
-        printf("   Dano causado:   %d\n", stats[i].danoTotal);
-        printf("   Combos feitos:  %d\n", stats[i].combosExecutados);
-        printf("   Esquivas:       %d\n", stats[i].esquivasRealizadas);
+void registrarVitoriaRanking(RegistroRanking ranking[], int *total, int capacidade, const char *nomeJogador)
+{
+    for (int i = 0; i < *total; i++)
+    {
+        if (strncmp(ranking[i].nomeJogador, nomeJogador, MAX_NOME_RANKING) == 0)
+        {
+            ranking[i].vitorias++;
+            ordenarRankingPorVitorias(ranking, *total);
+            return;
+        }
     }
-    printf("==============================\n\n");
+
+    if (*total >= capacidade)
+        return;
+
+    strncpy(ranking[*total].nomeJogador, nomeJogador, MAX_NOME_RANKING - 1);
+    ranking[*total].nomeJogador[MAX_NOME_RANKING - 1] = '\0';
+    ranking[*total].vitorias = 1;
+    (*total)++;
+    ordenarRankingPorVitorias(ranking, *total);
 }

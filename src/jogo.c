@@ -19,7 +19,6 @@ typedef enum
     ESTADO_SELECAO,
     ESTADO_COMBATE,
     ESTADO_FIM_ROUND,
-    ESTADO_RESULTADO_ROUND,
     ESTADO_VITORIA
 } EstadoJogo;
 
@@ -36,6 +35,7 @@ typedef enum
 #define POS_INICIAL_J2 (LARGURA_TELA - 260)
 #define TICK_GANHO_ENERGIA FPS_ALVO
 #define MAX_NOME_JOGADOR 32
+#define MAX_RANKING 10
 
 static const PlayerControls CONTROLES_J1 = {
     KEY_A, KEY_D, KEY_W,
@@ -53,19 +53,11 @@ static const PlayerControls CONTROLES_J2 = {
     KEY_L, KEY_KP_3
 };
 
-static void prepararStats(Estatistica *statsRound, const Jogador *jogador1, const Jogador *jogador2)
-{
-    memset(statsRound, 0, sizeof(Estatistica) * 2);
-    strncpy(statsRound[0].nomePersonagem, jogador1->personagem.nome, MAX_NOME - 1);
-    strncpy(statsRound[1].nomePersonagem, jogador2->personagem.nome, MAX_NOME - 1);
-}
-
-static void iniciarPartida(EquipeJogador *equipe1, EquipeJogador *equipe2, Estatistica *statsRound,
+static void iniciarPartida(EquipeJogador *equipe1, EquipeJogador *equipe2,
                            const int selecoesJ1[], const int selecoesJ2[])
 {
     inicializarEquipe(equipe1, selecoesJ1, POS_INICIAL_J1, CHAO_Y, 1);
     inicializarEquipe(equipe2, selecoesJ2, POS_INICIAL_J2, CHAO_Y, 0);
-    prepararStats(statsRound, jogadorAtivo(equipe1), jogadorAtivo(equipe2));
 }
 
 static void reiniciarSelecoes(SelecaoPersonagens *selecaoJ1, SelecaoPersonagens *selecaoJ2)
@@ -149,10 +141,12 @@ static int verificarVencedorEquipes(EquipeJogador *equipe1, EquipeJogador *equip
 }
 
 static void finalizarPartida(int resultado, EquipeJogador *equipe1, EquipeJogador *equipe2,
-                             Jogador **vencedorPartida, Estatistica *statsRound)
+                             Jogador **vencedorPartida, RegistroRanking ranking[],
+                             int *totalRanking, const char *nomeJ1, const char *nomeJ2)
 {
     EquipeJogador *equipeVencedora = (resultado == 1) ? equipe1 : equipe2;
     Jogador *perdedor = (resultado == 1) ? jogadorAtivo(equipe2) : jogadorAtivo(equipe1);
+    const char *nomeVencedor = (resultado == 1) ? nomeJ1 : nomeJ2;
 
     *vencedorPartida = jogadorAtivo(equipeVencedora);
     if (perdedor != NULL && perdedor->hp <= 0)
@@ -161,9 +155,7 @@ static void finalizarPartida(int resultado, EquipeJogador *equipe1, EquipeJogado
         perdedor->stateTicks = 0;
     }
 
-    if (*vencedorPartida != NULL)
-        limparFila(&(*vencedorPartida)->fila);
-    ordenarEstatisticas(statsRound, 2);
+    registrarVitoriaRanking(ranking, totalRanking, MAX_RANKING, nomeVencedor);
 }
 
 int executarJogo(void)
@@ -188,7 +180,8 @@ int executarJogo(void)
 
     EquipeJogador equipe1;
     EquipeJogador equipe2;
-    Estatistica statsRound[2];
+    RegistroRanking ranking[MAX_RANKING];
+    int totalRanking = 0;
     Jogador *vencedorRound = NULL;
     OpcaoPosPartida escolhaVitoriaJ1 = OPCAO_POS_REINICIAR;
     OpcaoPosPartida escolhaVitoriaJ2 = OPCAO_POS_REINICIAR;
@@ -259,8 +252,7 @@ int executarJogo(void)
 
             if (selecaoJ1.confirmouTudo && selecaoJ2.confirmouTudo)
             {
-                iniciarPartida(&equipe1, &equipe2, statsRound,
-                               selecaoJ1.personagens, selecaoJ2.personagens);
+                iniciarPartida(&equipe1, &equipe2, selecaoJ1.personagens, selecaoJ2.personagens);
                 mostrarControles = 0;
                 estado = ESTADO_COMBATE;
             }
@@ -285,15 +277,10 @@ int executarJogo(void)
                 TipoPassinho ataqueJ2 = updatePlayer(ativoJ2, ativoJ1, CONTROLES_J2);
 
                 if (ataqueJ1 != PASSINHO_NENHUM)
-                    processarPassinho(ataqueJ1, ativoJ1, ativoJ2, statsRound, tickAtual);
+                    processarPassinho(ataqueJ1, ativoJ1, ativoJ2, tickAtual);
 
                 if (ataqueJ2 != PASSINHO_NENHUM)
-                {
-                    Estatistica statsInvertido[2] = {statsRound[1], statsRound[0]};
-                    processarPassinho(ataqueJ2, ativoJ2, ativoJ1, statsInvertido, tickAtual);
-                    statsRound[0] = statsInvertido[1];
-                    statsRound[1] = statsInvertido[0];
-                }
+                    processarPassinho(ataqueJ2, ativoJ2, ativoJ1, tickAtual);
             }
             trocarSeAtivoMorreu(&equipe1);
             trocarSeAtivoMorreu(&equipe2);
@@ -303,7 +290,8 @@ int executarJogo(void)
 
                 if (resultado != 0)
                 {
-                    finalizarPartida(resultado, &equipe1, &equipe2, &vencedorRound, statsRound);
+                    finalizarPartida(resultado, &equipe1, &equipe2, &vencedorRound,
+                                     ranking, &totalRanking, nomeJ1, nomeJ2);
                     ticksFimRound = KNOCKDOWN_DISPLAY_TICKS;
                     estado = ESTADO_FIM_ROUND;
                 }
@@ -323,11 +311,6 @@ int executarJogo(void)
                                          &confirmouVitoriaJ1, &confirmouVitoriaJ2);
                 estado = ESTADO_VITORIA;
             }
-            break;
-
-        case ESTADO_RESULTADO_ROUND:
-            if (IsKeyPressed(KEY_ENTER))
-                estado = ESTADO_VITORIA;
             break;
 
         case ESTADO_VITORIA:
@@ -370,8 +353,7 @@ int executarJogo(void)
                 }
                 else
                 {
-                    iniciarPartida(&equipe1, &equipe2, statsRound,
-                                   selecaoJ1.personagens, selecaoJ2.personagens);
+                    iniciarPartida(&equipe1, &equipe2, selecaoJ1.personagens, selecaoJ2.personagens);
                     vencedorRound = NULL;
                     estado = ESTADO_COMBATE;
                 }
@@ -404,13 +386,11 @@ int executarJogo(void)
                 renderPlayer(jogadorAtivo(&equipe2), getFighterAssetsJogador(indiceAtivoEquipe(&equipe2), 2), RED, "J2");
             desenharHUD(&equipe1, &equipe2, nomeJ1, nomeJ2);
             break;
-        case ESTADO_RESULTADO_ROUND:
-            desenharResultadoRound(vencedorRound, statsRound, 2);
-            break;
         case ESTADO_VITORIA:
             desenharTelaVitoria(vencedorRound, nomeJ1, nomeJ2,
                                 escolhaVitoriaJ1, escolhaVitoriaJ2,
-                                confirmouVitoriaJ1, confirmouVitoriaJ2);
+                                confirmouVitoriaJ1, confirmouVitoriaJ2,
+                                ranking, totalRanking);
             break;
         }
 

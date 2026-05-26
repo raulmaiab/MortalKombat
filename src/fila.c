@@ -1,75 +1,96 @@
 #include "fila.h"
-#include <stdio.h>
+#include <stddef.h>
 
-/*
- * Inicializa a fila de passinnhos do jogador.
- * Deve ser chamada antes de qualquer operação na fila.
- */
-void inicializarFila(FilaPassinhos *fila) {
-    fila->inicio  = 0;
-    fila->fim     = 0;
+void inicializarFilaPersonagens(FilaPersonagens *fila)
+{
+    fila->inicio = NULL;
+    fila->fim = NULL;
     fila->tamanho = 0;
+    fila->total = 0;
+
+    for (int i = 0; i < TAM_EQUIPE; i++)
+    {
+        fila->membros[i].indicePersonagem = JOAO_CAMPOS;
+        fila->membros[i].vivo = 0;
+        fila->membros[i].next = NULL;
+    }
 }
 
-/*
- * Enfileira um passinho na fila do jogador.
- * Chamada a cada IsKeyPressed() no game loop.
- * Não enfileira se a fila estiver cheia.
- */
-void enfileirarPassinho(FilaPassinhos *fila, TipoPassinho passinho) {
-    if (filaCheia(fila)) return;
+int enfileirarPersonagem(FilaPersonagens *fila, IndicePersonagem indicePersonagem)
+{
+    if (fila->total >= TAM_EQUIPE)
+        return 0;
 
-    fila->elementos[fila->fim] = passinho;
+    NoPersonagem *novo = &fila->membros[fila->total++];
+    novo->indicePersonagem = indicePersonagem;
+    novo->vivo = 1;
+    novo->next = NULL;
 
-    fila->fim = (fila->fim + 1) % TAM_MAX_FILA;
-    
+    if (fila->fim != NULL)
+        fila->fim->next = novo;
+    else
+        fila->inicio = novo;
+
+    fila->fim = novo;
     fila->tamanho++;
+    return 1;
 }
 
-/*
- * Remove e retorna o próximo passinho a ser processado (FIFO).
- * Chamada a cada tick de processamento no game loop.
- * Retorna -1 se a fila estiver vazia.
- */
-TipoPassinho desenfileirarPassinho(FilaPassinhos *fila) {
-    if (filaVazia(fila)) return -1;
+NoPersonagem *noPersonagemAtivo(FilaPersonagens *fila)
+{
+    return fila->inicio;
+}
 
-    TipoPassinho passinho = fila->elementos[fila->inicio];
-    fila->inicio = (fila->inicio + 1) % TAM_MAX_FILA;
+const NoPersonagem *noPersonagemAtivoConst(const FilaPersonagens *fila)
+{
+    return fila->inicio;
+}
+
+int indicePersonagemAtivo(const FilaPersonagens *fila)
+{
+    if (fila->inicio == NULL)
+        return 0;
+    return fila->inicio->indicePersonagem;
+}
+
+int tamanhoFilaPersonagens(const FilaPersonagens *fila)
+{
+    return fila->tamanho;
+}
+
+int filaPersonagensTemVivos(const FilaPersonagens *fila)
+{
+    return fila->inicio != NULL;
+}
+
+int filaPersonagensPodeRotacionar(const FilaPersonagens *fila)
+{
+    return fila->tamanho > 1;
+}
+
+void rotacionarFilaPersonagens(FilaPersonagens *fila)
+{
+    if (!filaPersonagensPodeRotacionar(fila))
+        return;
+
+    NoPersonagem *antigoAtivo = fila->inicio;
+    fila->inicio = antigoAtivo->next;
+    antigoAtivo->next = NULL;
+    fila->fim->next = antigoAtivo;
+    fila->fim = antigoAtivo;
+}
+
+void removerPersonagemAtivo(FilaPersonagens *fila)
+{
+    if (fila->inicio == NULL)
+        return;
+
+    NoPersonagem *removido = fila->inicio;
+    fila->inicio = removido->next;
+    removido->vivo = 0;
+    removido->next = NULL;
     fila->tamanho--;
-    return passinho;
-}
 
-/*
- * Retorna o próximo elemento da fila SEM removê-lo.
- * Útil para verificar esquiva antes de aplicar dano.
- */
-TipoPassinho peekFila(FilaPassinhos *fila) {
-    if (filaVazia(fila)) return -1;
-    return fila->elementos[fila->inicio];
-}
-
-/*
- * Retorna 1 se a fila não possui elementos, 0 caso contrário.
- */
-int filaVazia(FilaPassinhos *fila) {
-    return fila->tamanho == 0;
-}
-
-/*
- * Retorna 1 se a fila atingiu o tamanho máximo (TAM_MAX_FILA).
- * Quando cheia, o sistema verifica se há combo antes de processar.
- */
-int filaCheia(FilaPassinhos *fila) {
-    return fila->tamanho == TAM_MAX_FILA;
-}
-
-/*
- * Limpa todos os elementos da fila.
- * Chamada no início de cada round ou ao tomar um combo.
- */
-void limparFila(FilaPassinhos *fila) {
-    fila->inicio  = 0;
-    fila->fim     = 0;
-    fila->tamanho = 0;
+    if (fila->inicio == NULL)
+        fila->fim = NULL;
 }

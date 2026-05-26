@@ -5,6 +5,7 @@
 #include "equipe.h"
 #include "fighter_assets.h"
 #include "jogador.h"
+#include "ordenacao.h"
 #include "raylib.h"
 
 #define LARGURA_TELA  1280
@@ -30,9 +31,9 @@ void desenharEntradaNomes(Texture2D background, const char *nomeJ1, const char *
 void desenharSelecaoPersonagem(const int selecoesJ1[], int slotAtualJ1, int confirmouJ1,
                                const int selecoesJ2[], int slotAtualJ2, int confirmouJ2,
                                int cenarioAtual, int mostrarControles);
-void desenharResultadoRound(Jogador *vencedor, Estatistica *stats, int totalStats);
 void desenharTelaVitoria(Jogador *vencedor, const char *nomeJ1, const char *nomeJ2,
                          OpcaoPosPartida escolhaJ1, OpcaoPosPartida escolhaJ2,
-                         int confirmouJ1, int confirmouJ2);
+                         int confirmouJ1, int confirmouJ2,
+                         const RegistroRanking ranking[], int totalRanking);
 
 #endif

@@ -14,20 +14,21 @@
 #define DANO_NORMAL_PERCENTUAL 4
 #define DANO_ESPECIAL_PERCENTUAL 40
 
-/* Combo: sequência de 3 passinhos que ativa o golpe especial */
-typedef struct
+typedef enum
 {
-    TipoPassinho sequencia[TAM_MAX_FILA];
-} Combo;
+    PASSINHO_NENHUM = -1,
+    ATAQUE_NORMAL,
+    ATAQUE_AGACHADO,
+    ATAQUE_ESPECIAL
+} TipoPassinho;
 
 extern const int energiaConsumida[3];
 
 /* ---- Funções de Combate ---- */
-void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, Estatistica *stats, int tickAtual);
-int verificarCombo(FilaPassinhos *fila, Combo *combosPersonagem, int totalCombos);
+void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, int tickAtual);
 void atualizarEnergia(Jogador *jogador, int dano);
 void adicionarEnergia(Jogador *jogador, int quantidade);
 int verificarVencedor(Jogador *jogador1, Jogador *jogador2);
-void encerrarRound(Jogador *vencedor, Estatistica *stats);
+void encerrarRound(Jogador *vencedor);
 
 #endif
