@@ -4,13 +4,9 @@
 static FighterAssets lutadores[TOTAL_PERSONAGENS][2];
 
 static const char *pastasPersonagens[TOTAL_PERSONAGENS] = {
-    "joao_campos",
-    "ds87",
-    "kuki",
+    "alirio",
     "odiferenciado",
-    "clarisse",
     "ariano",
-    "tojal"
 };
 
 static const char *pastaDisponivel(IndicePersonagem indice)
