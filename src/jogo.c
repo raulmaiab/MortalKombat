@@ -42,7 +42,7 @@ static const PlayerControls CONTROLES_J1 = {
     KEY_F, KEY_E,
     KEY_S,
     KEY_G, 0,
-    KEY_T, KEY_Y
+    KEY_LEFT_SHIFT, 0
 };
 
 static const PlayerControls CONTROLES_J2 = {
@@ -50,7 +50,7 @@ static const PlayerControls CONTROLES_J2 = {
     KEY_RIGHT_SHIFT, KEY_INSERT,
     KEY_DOWN,
     KEY_J, KEY_KP_1,
-    KEY_L, KEY_KP_3
+    KEY_ENTER, KEY_KP_ENTER
 };
 
 static void iniciarPartida(EquipeJogador *equipe1, EquipeJogador *equipe2,
@@ -138,6 +138,30 @@ static int verificarVencedorEquipes(EquipeJogador *equipe1, EquipeJogador *equip
     if (!equipeTemVivos(equipe1))
         return 2;
     return 0;
+}
+
+static void desenharFiltroEspecial(const EquipeJogador *equipe1, const EquipeJogador *equipe2)
+{
+    const Jogador *ativoJ1 = jogadorAtivoConst(equipe1);
+    const Jogador *ativoJ2 = jogadorAtivoConst(equipe2);
+
+    if (ativoJ1 != NULL && ativoJ1->specialAttackTicks > 0)
+        DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(BLUE, 0.24f));
+
+    if (ativoJ2 != NULL && ativoJ2->specialAttackTicks > 0)
+        DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(RED, 0.24f));
+}
+
+static void processarAtaquesNoFrameDeImpacto(Jogador *ativoJ1, Jogador *ativoJ2, int tickAtual)
+{
+    TipoPassinho ataqueJ1 = consumirAtaqueNoFrameDeImpacto(ativoJ1);
+    TipoPassinho ataqueJ2 = consumirAtaqueNoFrameDeImpacto(ativoJ2);
+
+    if (ataqueJ1 != PASSINHO_NENHUM)
+        processarPassinho(ataqueJ1, ativoJ1, ativoJ2, tickAtual);
+
+    if (ataqueJ2 != PASSINHO_NENHUM)
+        processarPassinho(ataqueJ2, ativoJ2, ativoJ1, tickAtual);
 }
 
 static void finalizarPartida(int resultado, EquipeJogador *equipe1, EquipeJogador *equipe2,
@@ -273,14 +297,10 @@ int executarJogo(void)
             {
                 Jogador *ativoJ1 = jogadorAtivo(&equipe1);
                 Jogador *ativoJ2 = jogadorAtivo(&equipe2);
-                TipoPassinho ataqueJ1 = updatePlayer(ativoJ1, ativoJ2, CONTROLES_J1);
-                TipoPassinho ataqueJ2 = updatePlayer(ativoJ2, ativoJ1, CONTROLES_J2);
 
-                if (ataqueJ1 != PASSINHO_NENHUM)
-                    processarPassinho(ataqueJ1, ativoJ1, ativoJ2, tickAtual);
-
-                if (ataqueJ2 != PASSINHO_NENHUM)
-                    processarPassinho(ataqueJ2, ativoJ2, ativoJ1, tickAtual);
+                updatePlayer(ativoJ1, ativoJ2, CONTROLES_J1);
+                updatePlayer(ativoJ2, ativoJ1, CONTROLES_J2);
+                processarAtaquesNoFrameDeImpacto(ativoJ1, ativoJ2, tickAtual);
             }
             trocarSeAtivoMorreu(&equipe1);
             trocarSeAtivoMorreu(&equipe2);
@@ -385,6 +405,7 @@ int executarJogo(void)
             if (jogadorAtivo(&equipe2) != NULL)
                 renderPlayer(jogadorAtivo(&equipe2), getFighterAssetsJogador(indiceAtivoEquipe(&equipe2), 2), RED, "J2");
             desenharHUD(&equipe1, &equipe2, nomeJ1, nomeJ2);
+            desenharFiltroEspecial(&equipe1, &equipe2);
             break;
         case ESTADO_VITORIA:
             desenharTelaVitoria(vencedorRound, nomeJ1, nomeJ2,

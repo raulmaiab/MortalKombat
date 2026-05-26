@@ -8,19 +8,19 @@ static void testarFilaPersonagens(void)
     FilaPersonagens fila;
 
     inicializarFilaPersonagens(&fila);
-    enfileirarPersonagem(&fila, JOAO_CAMPOS);
-    enfileirarPersonagem(&fila, MAGRAO);
-    enfileirarPersonagem(&fila, KUKI);
+    enfileirarPersonagem(&fila, ANDERSON_NEIFF);
+    enfileirarPersonagem(&fila, ALIRIO);
+    enfileirarPersonagem(&fila, ARIANO);
 
     assert(tamanhoFilaPersonagens(&fila) == 3);
-    assert(indicePersonagemAtivo(&fila) == JOAO_CAMPOS);
+    assert(indicePersonagemAtivo(&fila) == ANDERSON_NEIFF);
 
     rotacionarFilaPersonagens(&fila);
-    assert(indicePersonagemAtivo(&fila) == MAGRAO);
+    assert(indicePersonagemAtivo(&fila) == ALIRIO);
 
     removerPersonagemAtivo(&fila);
     assert(tamanhoFilaPersonagens(&fila) == 2);
-    assert(indicePersonagemAtivo(&fila) == KUKI);
+    assert(indicePersonagemAtivo(&fila) == ARIANO);
 }
 
 static void testarRankingPorVitorias(void)

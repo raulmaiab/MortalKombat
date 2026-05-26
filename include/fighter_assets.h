@@ -20,6 +20,7 @@ typedef struct
     FighterAnimation walk;
     FighterAnimation jump;
     FighterAnimation lowattack;
+    FighterAnimation special;
     FighterAnimation defense;
     FighterAnimation attack;
     FighterAnimation stun;

@@ -15,6 +15,7 @@ typedef enum PlayerState
     CROUCH,
     DEFENSE,
     ATTACK,
+    SPECIAL_ATTACK,
     STUN,
     KNOCKDOWN
 } PlayerState;
@@ -47,6 +48,10 @@ typedef struct
     int agachado;
     int ataqueAgachadoTicks;
     int attackTicks;
+    int specialAttackTicks;
+    int ataquePendente;
+    int ataquePendenteTicks;
+    int ataquePendenteAplicado;
     int stateTicks;
     int olhandoDireita;
     PlayerState state;

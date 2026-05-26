@@ -15,10 +15,15 @@ static void aplicarRecuperacaoAtaque(Jogador *atacante, TipoPassinho passinho)
 {
     if (passinho == ATAQUE_AGACHADO)
     {
-        if (atacante->ataqueAgachadoTicks < RECUPERACAO_ATAQUE_TICKS)
+        if (atacante->ataqueAgachadoTicks <= 0)
             atacante->ataqueAgachadoTicks = RECUPERACAO_ATAQUE_TICKS;
     }
-    else if (atacante->attackTicks < RECUPERACAO_ATAQUE_TICKS)
+    else if (passinho == ATAQUE_ESPECIAL)
+    {
+        if (atacante->specialAttackTicks <= 0)
+            atacante->specialAttackTicks = RECUPERACAO_ATAQUE_TICKS;
+    }
+    else if (atacante->attackTicks <= 0)
     {
         atacante->attackTicks = RECUPERACAO_ATAQUE_TICKS;
     }
@@ -74,7 +79,7 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
         dano = calcularDanoPercentual(alvo, DANO_NORMAL_PERCENTUAL);
         break;
     case ATAQUE_ESPECIAL:
-        custo = energiaConsumida[2];
+        custo = 0;
         dano = calcularDanoPercentual(alvo, DANO_ESPECIAL_PERCENTUAL);
         break;
     default:
@@ -86,7 +91,7 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
         return;
     }
 
-    if (calcularDistancia(atacante, alvo) > DISTANCIA_MAXIMA_ATAQUE)
+    if (passinho != ATAQUE_ESPECIAL && calcularDistancia(atacante, alvo) > DISTANCIA_MAXIMA_ATAQUE)
     {
         return;
     }

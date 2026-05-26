@@ -37,6 +37,10 @@ void inicializarJogador(Jogador *jogador, IndicePersonagem indice, float posX, f
     jogador->agachado = 0;
     jogador->ataqueAgachadoTicks = 0;
     jogador->attackTicks = 0;
+    jogador->specialAttackTicks = 0;
+    jogador->ataquePendente = -1;
+    jogador->ataquePendenteTicks = 0;
+    jogador->ataquePendenteAplicado = 0;
     jogador->stateTicks = 0;
     jogador->olhandoDireita = olhandoDireita;
     jogador->state = IDLE;
@@ -59,6 +63,10 @@ void resetarJogador(Jogador *jogador)
     jogador->agachado = 0;
     jogador->ataqueAgachadoTicks = 0;
     jogador->attackTicks = 0;
+    jogador->specialAttackTicks = 0;
+    jogador->ataquePendente = -1;
+    jogador->ataquePendenteTicks = 0;
+    jogador->ataquePendenteAplicado = 0;
     jogador->stateTicks = 0;
     jogador->state = IDLE;
 }

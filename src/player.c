@@ -14,12 +14,36 @@ static void limitarPosicaoX(Jogador *jogador)
 
 static void atualizarTimers(Jogador *jogador)
 {
+    int especialAtivo = jogador->specialAttackTicks > 0;
+
     if (jogador->stunTicks > 0)
         jogador->stunTicks--;
     if (jogador->attackTicks > 0)
         jogador->attackTicks--;
+    if (jogador->specialAttackTicks > 0)
+    {
+        jogador->specialAttackTicks--;
+        if (especialAtivo && jogador->specialAttackTicks == 0)
+            jogador->energia = 0;
+    }
     if (jogador->ataqueAgachadoTicks > 0)
         jogador->ataqueAgachadoTicks--;
+    if (jogador->ataquePendente != PASSINHO_NENHUM)
+        jogador->ataquePendenteTicks++;
+}
+
+static void registrarAtaquePendente(Jogador *jogador, TipoPassinho ataque)
+{
+    jogador->ataquePendente = ataque;
+    jogador->ataquePendenteTicks = 0;
+    jogador->ataquePendenteAplicado = 0;
+}
+
+static void cancelarAtaquePendente(Jogador *jogador)
+{
+    jogador->ataquePendente = PASSINHO_NENHUM;
+    jogador->ataquePendenteTicks = 0;
+    jogador->ataquePendenteAplicado = 0;
 }
 
 static void atualizarFisica(Jogador *jogador)
@@ -50,6 +74,8 @@ static void atualizarEstado(Jogador *jogador, int moveu)
         novoEstado = STUN;
     else if (jogador->agachado || jogador->ataqueAgachadoTicks > 0)
         novoEstado = CROUCH;
+    else if (jogador->specialAttackTicks > 0)
+        novoEstado = SPECIAL_ATTACK;
     else if (jogador->attackTicks > 0)
         novoEstado = ATTACK;
     else if (!jogador->noChao)
@@ -80,6 +106,8 @@ static Color corDoEstado(const Jogador *jogador, Color corBase)
         return GREEN;
     case ATTACK:
         return GOLD;
+    case SPECIAL_ATTACK:
+        return PURPLE;
     case JUMP:
         return SKYBLUE;
     case STUN:
@@ -106,6 +134,9 @@ TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls co
     TipoPassinho ataqueSolicitado = PASSINHO_NENHUM;
 
     atualizarTimers(jogador);
+    if (jogador->hp <= 0 || jogador->stunTicks > 0)
+        cancelarAtaquePendente(jogador);
+
     jogador->olhandoDireita = oponente->posX > jogador->posX;
     jogador->agachado = jogador->hp > 0 &&
                         jogador->stunTicks == 0 &&
@@ -119,13 +150,15 @@ TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls co
 
     if (jogador->hp > 0 && jogador->stunTicks == 0)
     {
-        if (!jogador->defendendo && jogador->attackTicks == 0 && jogador->ataqueAgachadoTicks == 0)
+        if (!jogador->defendendo && jogador->attackTicks == 0 &&
+            jogador->specialAttackTicks == 0 && jogador->ataqueAgachadoTicks == 0)
         {
             if (keyPressedAlternativo(controles.ataqueNormal, controles.ataqueNormalAlternativo))
             {
                 if (jogador->energia >= energiaConsumida[jogador->agachado ? 1 : 0])
                 {
                     ataqueSolicitado = jogador->agachado ? ATAQUE_AGACHADO : ATAQUE_NORMAL;
+                    registrarAtaquePendente(jogador, ataqueSolicitado);
                     jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
                     jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
                 }
@@ -136,13 +169,15 @@ TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls co
                 if (jogador->energia >= custo)
                 {
                     ataqueSolicitado = ATAQUE_ESPECIAL;
-                    jogador->attackTicks = jogador->agachado ? 0 : ATTACK_STATE_TICKS;
-                    jogador->ataqueAgachadoTicks = jogador->agachado ? CROUCH_ATTACK_STATE_TICKS : 0;
+                    registrarAtaquePendente(jogador, ataqueSolicitado);
+                    jogador->attackTicks = 0;
+                    jogador->specialAttackTicks = SPECIAL_ATTACK_STATE_TICKS;
+                    jogador->ataqueAgachadoTicks = 0;
                 }
             }
         }
 
-        if (!jogador->agachado && jogador->attackTicks == 0 &&
+        if (!jogador->agachado && jogador->attackTicks == 0 && jogador->specialAttackTicks == 0 &&
             jogador->ataqueAgachadoTicks == 0)
         {
             float velocidade = jogador->defendendo ? VELOCIDADE_DEFESA : VELOCIDADE_MOVIMENTO;
@@ -169,6 +204,27 @@ TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls co
     atualizarFisica(jogador);
     atualizarEstado(jogador, moveu);
     return ataqueSolicitado;
+}
+
+TipoPassinho consumirAtaqueNoFrameDeImpacto(Jogador *jogador)
+{
+    int ticksImpacto;
+    TipoPassinho ataque;
+
+    if (jogador->ataquePendente == PASSINHO_NENHUM || jogador->ataquePendenteAplicado)
+        return PASSINHO_NENHUM;
+
+    if (jogador->ataquePendente == ATAQUE_ESPECIAL)
+        ticksImpacto = SPECIAL_ATTACK_HIT_TICKS;
+    else
+        ticksImpacto = ATTACK_HIT_TICKS;
+
+    if (jogador->ataquePendenteTicks < ticksImpacto)
+        return PASSINHO_NENHUM;
+
+    ataque = (TipoPassinho)jogador->ataquePendente;
+    jogador->ataquePendenteAplicado = 1;
+    return ataque;
 }
 
 static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *anim)
@@ -238,6 +294,8 @@ void resetPlayerPosition(Jogador *jogador, float posX, float posY, int olhandoDi
     jogador->agachado = 0;
     jogador->ataqueAgachadoTicks = 0;
     jogador->attackTicks = 0;
+    jogador->specialAttackTicks = 0;
+    cancelarAtaquePendente(jogador);
     jogador->stateTicks = 0;
     jogador->olhandoDireita = olhandoDireita;
     jogador->state = IDLE;
