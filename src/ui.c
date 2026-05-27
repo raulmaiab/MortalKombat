@@ -192,7 +192,6 @@ void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2,
 
 /*
  * Desenha o cenário de fundo.
- * TODO: carregar imagem de fundo (Marco Zero, Boa Viagem, etc.)
  */
 void desenharCenario(Texture2D background) {
     DrawTexturePro(

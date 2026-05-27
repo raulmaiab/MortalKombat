@@ -36,6 +36,7 @@ typedef enum
 #define TICK_GANHO_ENERGIA FPS_ALVO
 #define MAX_NOME_JOGADOR 32
 #define MAX_RANKING 10
+#define ARQUIVO_RANKING "ranking.txt"
 
 static const PlayerControls CONTROLES_J1 = {
     KEY_A, KEY_D, KEY_W,
@@ -180,6 +181,7 @@ static void finalizarPartida(int resultado, EquipeJogador *equipe1, EquipeJogado
     }
 
     registrarVitoriaRanking(ranking, totalRanking, MAX_RANKING, nomeVencedor);
+    salvarRankingArquivo(ARQUIVO_RANKING, ranking, *totalRanking);
 }
 
 int executarJogo(void)
@@ -205,7 +207,7 @@ int executarJogo(void)
     EquipeJogador equipe1;
     EquipeJogador equipe2;
     RegistroRanking ranking[MAX_RANKING];
-    int totalRanking = 0;
+    int totalRanking = carregarRankingArquivo(ARQUIVO_RANKING, ranking, MAX_RANKING);
     Jogador *vencedorRound = NULL;
     OpcaoPosPartida escolhaVitoriaJ1 = OPCAO_POS_REINICIAR;
     OpcaoPosPartida escolhaVitoriaJ2 = OPCAO_POS_REINICIAR;

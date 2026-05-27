@@ -9,9 +9,9 @@ Personagem getPersonagem(IndicePersonagem indice)
 {
     Personagem personagens[TOTAL_PERSONAGENS] = {
         /* Nome              hpMax  dNormal dEsp  vel */
-        {"Anderson Neiff", 100, 10, 35, 6},
-        {"Alirio", 90, 9, 28, 8},
-        {"Ariano Suassuna", 100, 9, 32, 7},
+        {"Anderson Neiff", 100, 9, 35, 6},
+        {"Alirio", 100, 8, 40, 8},
+        {"Ariano Suassuna", 100, 10, 32, 7},
     };
     return personagens[indice];
 }
