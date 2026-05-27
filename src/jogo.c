@@ -269,10 +269,10 @@ int executarJogo(void)
             if (IsKeyPressed(KEY_L) || IsKeyPressed(KEY_RIGHT_SHIFT))
                 confirmarSelecaoPersonagens(&selecaoJ2);
 
-            if (IsKeyPressed(KEY_E) && cenarioAtual < TOTAL_CENARIOS - 1)
-                cenarioAtual++;
-            if (IsKeyPressed(KEY_Q) && cenarioAtual > 0)
-                cenarioAtual--;
+            if (IsKeyPressed(KEY_E))
+                cenarioAtual = (IndiceCenario)((cenarioAtual + 1) % TOTAL_CENARIOS);
+            if (IsKeyPressed(KEY_Q))
+                cenarioAtual = (IndiceCenario)((cenarioAtual + TOTAL_CENARIOS - 1) % TOTAL_CENARIOS);
 
             if (selecaoJ1.confirmouTudo && selecaoJ2.confirmouTudo)
             {

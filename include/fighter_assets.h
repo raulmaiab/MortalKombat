@@ -26,7 +26,6 @@ typedef struct
     FighterAnimation stun;
     FighterAnimation knockdown;
     Texture2D portrait;
-    float escalaRender;
 } FighterAssets;
 
 void carregarAssetsLutadores(void);

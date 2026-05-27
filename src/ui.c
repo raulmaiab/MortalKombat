@@ -414,6 +414,7 @@ void desenharSelecaoPersonagem(const int selecoesJ1[], int slotAtualJ1, int conf
         const char *textoCenario = TextFormat("Cenario: %s", cenarios[cenarioAtual]);
         int larguraCenario = MeasureText(textoCenario, 20);
         desenharTextoComSombra(textoCenario, LARGURA_TELA / 2 - larguraCenario / 2, 645, 20, WHITE);
+        
     }
     desenharAbaControles();
 

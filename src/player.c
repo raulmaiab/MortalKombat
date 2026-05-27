@@ -1,8 +1,9 @@
 #include "player.h"
 #include <stddef.h>
 
-#define SPRITE_ALTURA 504
-#define SPRITE_LARGURA 504
+#define SPRITE_ALTURA_PADRAO 480.0f
+#define SPRITE_ALTURA_AGACHADO 380.0f
+#define SPRITE_ALTURA_CAIDO 260.0f
 
 static void limitarPosicaoX(Jogador *jogador)
 {
@@ -235,12 +236,21 @@ TipoPassinho consumirAtaqueNoFrameDeImpacto(Jogador *jogador)
     return ataque;
 }
 
-static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *anim, float escalaRender)
+static float alturaRenderEstado(PlayerState state)
+{
+    if (state == CROUCH)
+        return SPRITE_ALTURA_AGACHADO;
+    if (state == KNOCKDOWN)
+        return SPRITE_ALTURA_CAIDO;
+    return SPRITE_ALTURA_PADRAO;
+}
+
+static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *anim)
 {
     int frameAtual;
     int ticksPorFrame;
-    float larguraSprite = SPRITE_LARGURA * escalaRender;
-    float alturaSprite = SPRITE_ALTURA * escalaRender;
+    float alturaSprite;
+    float larguraSprite;
     Texture2D textura;
     Rectangle origem;
     Rectangle destino;
@@ -264,6 +274,8 @@ static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *
 
     textura = anim->frames[frameAtual];
     origem = anim->sources[frameAtual];
+    alturaSprite = alturaRenderEstado(jogador->state);
+    larguraSprite = alturaSprite * (origem.width / origem.height);
     destino = (Rectangle){
         jogador->posX + (LARGURA_PERSONAGEM / 2.0f) - (larguraSprite / 2.0f),
         jogador->posY + ALTURA_PERSONAGEM - alturaSprite,
@@ -287,7 +299,7 @@ void renderPlayer(const Jogador *jogador, const FighterAssets *assets, Color cor
     const FighterAnimation *anim = getAnimationForState(assets, jogador->state);
 
     if (anim != NULL && anim->totalFrames > 0)
-        renderSpriteAnimado(jogador, anim, assets->escalaRender);
+        renderSpriteAnimado(jogador, anim);
     else
         DrawRectangle(x, y, LARGURA_PERSONAGEM, ALTURA_PERSONAGEM, cor);
 

@@ -1,11 +1,12 @@
 #include "fighter_assets.h"
 #include <stdio.h>
+#include <string.h>
 
 static FighterAssets lutadores[TOTAL_PERSONAGENS][2];
 
 static const char *pastasPersonagens[TOTAL_PERSONAGENS] = {
-    "alirio",
     "odiferenciado",
+    "alirio",
     "ariano",
 };
 
@@ -161,6 +162,7 @@ static int carregarSpriteSheetTeste(FighterAssets *assets, const char *pasta)
     char path[160];
     Image image;
     Texture2D sheet;
+    int isNeiff = strstr(pasta, "odiferenciado") != NULL;
 
     snprintf(path, sizeof(path), "assets/fighters/%s/SpriteSheet.png", pasta);
     if (!FileExists(path))
@@ -179,11 +181,23 @@ static int carregarSpriteSheetTeste(FighterAssets *assets, const char *pasta)
     carregarLinhaSpriteSheet(&assets->idle, sheet, &image, 0, 0.13f);
     carregarLinhaSpriteSheet(&assets->walk, sheet, &image, 1, 0.09f);
     carregarLinhaSpriteSheet(&assets->jump, sheet, &image, 2, 0.10f);
-    carregarLinhaSpriteSheet(&assets->special, sheet, &image, 3, 0.24f);
-    carregarLinhaSpriteSheet(&assets->stun, sheet, &image, 4, 0.10f);
-    carregarLinhaSpriteSheet(&assets->knockdown, sheet, &image, 5, 0.12f);
-    carregarLinhaSpriteSheet(&assets->defense, sheet, &image, 6, 0.10f);
-    carregarLinhaSpriteSheet(&assets->attack, sheet, &image, 7, 0.08f);
+    if (isNeiff)
+    {
+        carregarLinhaSpriteSheet(&assets->defense, sheet, &image, 3, 0.10f);
+        carregarLinhaSpriteSheet(&assets->attack, sheet, &image, 4, 0.08f);
+        carregarLinhaSpriteSheet(&assets->lowattack, sheet, &image, 5, 0.08f);
+        carregarLinhaSpriteSheet(&assets->stun, sheet, &image, 6, 0.10f);
+        carregarLinhaSpriteSheet(&assets->knockdown, sheet, &image, 6, 0.12f);
+        carregarLinhaSpriteSheet(&assets->special, sheet, &image, 7, 0.12f);
+    }
+    else
+    {
+        carregarLinhaSpriteSheet(&assets->special, sheet, &image, 3, 0.24f);
+        carregarLinhaSpriteSheet(&assets->stun, sheet, &image, 4, 0.10f);
+        carregarLinhaSpriteSheet(&assets->knockdown, sheet, &image, 5, 0.12f);
+        carregarLinhaSpriteSheet(&assets->defense, sheet, &image, 6, 0.10f);
+        carregarLinhaSpriteSheet(&assets->attack, sheet, &image, 7, 0.08f);
+    }
 
     UnloadImage(image);
 
@@ -318,8 +332,6 @@ static void carregarAssetsPersonagem(IndicePersonagem indice, int jogador)
     FighterAssets *assets = &lutadores[indice][jogador - 1];
     const char *pastaBase = pastaDisponivel(indice);
     const char *pasta = pastaJogador(pastaBase, jogador);
-
-    assets->escalaRender = indice == ALIRIO ? 0.62f : 1.0f;
 
     if (!carregarSpriteSheetTeste(assets, pasta))
     {
