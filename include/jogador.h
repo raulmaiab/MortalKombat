@@ -35,7 +35,6 @@ typedef struct
 {
     Personagem personagem;
     int hp;
-    int energia;
     int stunTicks;
     int ultimoGolpeTick; /* último tick em que o jogador levou dano */
     int golpesSeguidos;  /* contador de hits rápidos para hitstun */

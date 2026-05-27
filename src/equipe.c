@@ -4,6 +4,7 @@
 
 void inicializarEquipe(EquipeJogador *equipe, const int selecoes[], float posX, float posY, int olhandoDireita)
 {
+    equipe->energia = 0;
     equipe->roundsVencidos = 0;
     equipe->olhandoDireitaEntrada = olhandoDireita;
     inicializarFilaPersonagens(&equipe->personagens);
@@ -87,6 +88,7 @@ void resetarEquipeParaNovoRound(EquipeJogador *equipe, float posX, float posY, i
         inicializarJogador(&equipe->personagens.membros[i].jogador, indice, posX, posY, olhandoDireita);
     }
 
+    equipe->energia = 0;
     equipe->roundsVencidos = roundsVencidos;
     inicializarFilaPersonagens(&equipe->personagens);
     for (int i = 0; i < TAM_EQUIPE; i++)

@@ -24,7 +24,6 @@ void inicializarJogador(Jogador *jogador, IndicePersonagem indice, float posX, f
 {
     jogador->personagem = getPersonagem(indice);
     jogador->hp = jogador->personagem.hpMaximo;
-    jogador->energia = 0;
     jogador->stunTicks = 0;
     jogador->ultimoGolpeTick = -20;
     jogador->golpesSeguidos = 0;
@@ -53,7 +52,6 @@ void inicializarJogador(Jogador *jogador, IndicePersonagem indice, float posX, f
 void resetarJogador(Jogador *jogador)
 {
     jogador->hp = jogador->personagem.hpMaximo;
-    jogador->energia = 0;
     jogador->stunTicks = 0;
     jogador->ultimoGolpeTick = -20;
     jogador->golpesSeguidos = 0;

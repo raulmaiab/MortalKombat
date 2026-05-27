@@ -153,16 +153,18 @@ static void desenharFiltroEspecial(const EquipeJogador *equipe1, const EquipeJog
         DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(RED, 0.24f));
 }
 
-static void processarAtaquesNoFrameDeImpacto(Jogador *ativoJ1, Jogador *ativoJ2, int tickAtual)
+static void processarAtaquesNoFrameDeImpacto(EquipeJogador *equipe1, EquipeJogador *equipe2, int tickAtual)
 {
+    Jogador *ativoJ1 = jogadorAtivo(equipe1);
+    Jogador *ativoJ2 = jogadorAtivo(equipe2);
     TipoPassinho ataqueJ1 = consumirAtaqueNoFrameDeImpacto(ativoJ1);
     TipoPassinho ataqueJ2 = consumirAtaqueNoFrameDeImpacto(ativoJ2);
 
     if (ataqueJ1 != PASSINHO_NENHUM)
-        processarPassinho(ataqueJ1, ativoJ1, ativoJ2, tickAtual);
+        processarPassinho(ataqueJ1, ativoJ1, ativoJ2, &equipe1->energia, tickAtual);
 
     if (ataqueJ2 != PASSINHO_NENHUM)
-        processarPassinho(ataqueJ2, ativoJ2, ativoJ1, tickAtual);
+        processarPassinho(ataqueJ2, ativoJ2, ativoJ1, &equipe2->energia, tickAtual);
 }
 
 static void finalizarPartida(int resultado, EquipeJogador *equipe1, EquipeJogador *equipe2,
@@ -287,8 +289,8 @@ int executarJogo(void)
         case ESTADO_COMBATE:
             if (tickAtual % TICK_GANHO_ENERGIA == 0)
             {
-                adicionarEnergia(jogadorAtivo(&equipe1), GANHO_ENERGIA_TEMPO);
-                adicionarEnergia(jogadorAtivo(&equipe2), GANHO_ENERGIA_TEMPO);
+                adicionarEnergia(&equipe1.energia, GANHO_ENERGIA_TEMPO);
+                adicionarEnergia(&equipe2.energia, GANHO_ENERGIA_TEMPO);
             }
 
             if (IsKeyPressed(KEY_R))
@@ -300,9 +302,9 @@ int executarJogo(void)
                 Jogador *ativoJ1 = jogadorAtivo(&equipe1);
                 Jogador *ativoJ2 = jogadorAtivo(&equipe2);
 
-                updatePlayer(ativoJ1, ativoJ2, CONTROLES_J1);
-                updatePlayer(ativoJ2, ativoJ1, CONTROLES_J2);
-                processarAtaquesNoFrameDeImpacto(ativoJ1, ativoJ2, tickAtual);
+                updatePlayer(ativoJ1, ativoJ2, CONTROLES_J1, &equipe1.energia);
+                updatePlayer(ativoJ2, ativoJ1, CONTROLES_J2, &equipe2.energia);
+                processarAtaquesNoFrameDeImpacto(&equipe1, &equipe2, tickAtual);
             }
             trocarSeAtivoMorreu(&equipe1);
             trocarSeAtivoMorreu(&equipe2);

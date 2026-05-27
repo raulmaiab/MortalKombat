@@ -13,7 +13,7 @@ static void limitarPosicaoX(Jogador *jogador)
         jogador->posX = LARGURA_TELA - LARGURA_PERSONAGEM;
 }
 
-static void atualizarTimers(Jogador *jogador)
+static void atualizarTimers(Jogador *jogador, int *energiaEquipe)
 {
     int especialAtivo = jogador->specialAttackTicks > 0;
 
@@ -25,7 +25,7 @@ static void atualizarTimers(Jogador *jogador)
     {
         jogador->specialAttackTicks--;
         if (especialAtivo && jogador->specialAttackTicks == 0)
-            jogador->energia = 0;
+            *energiaEquipe = 0;
     }
     if (jogador->ataqueAgachadoTicks > 0)
         jogador->ataqueAgachadoTicks--;
@@ -71,8 +71,6 @@ static void atualizarEstado(Jogador *jogador, int moveu)
         novoEstado = KNOCKDOWN;
     else if (jogador->defendendo)
         novoEstado = DEFENSE;
-    else if (jogador->stunTicks > 0)
-        novoEstado = STUN;
     else if (jogador->agachado || jogador->ataqueAgachadoTicks > 0)
         novoEstado = CROUCH;
     else if (jogador->specialAttackTicks > 0)
@@ -111,8 +109,6 @@ static Color corDoEstado(const Jogador *jogador, Color corBase)
         return PURPLE;
     case JUMP:
         return SKYBLUE;
-    case STUN:
-        return ORANGE;
     case KNOCKDOWN:
         return GRAY;
     case WALK:
@@ -129,12 +125,12 @@ static int keyPressedAlternativo(int teclaPrincipal, int teclaAlternativa)
            (teclaAlternativa != 0 && IsKeyPressed(teclaAlternativa));
 }
 
-TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles)
+TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles, int *energiaEquipe)
 {
     int moveu = 0;
     TipoPassinho ataqueSolicitado = PASSINHO_NENHUM;
 
-    atualizarTimers(jogador);
+    atualizarTimers(jogador, energiaEquipe);
     if (jogador->hp <= 0 || jogador->stunTicks > 0)
         cancelarAtaquePendente(jogador);
 
@@ -152,7 +148,7 @@ TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls co
         {
             if (IsKeyPressed(controles.agachar) && jogador->noChao)
             {
-                if (jogador->energia >= energiaConsumida[1])
+                if (*energiaEquipe >= energiaConsumida[1])
                 {
                     ataqueSolicitado = ATAQUE_AGACHADO;
                     registrarAtaquePendente(jogador, ataqueSolicitado);
@@ -163,7 +159,7 @@ TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls co
             if (ataqueSolicitado == PASSINHO_NENHUM &&
                 keyPressedAlternativo(controles.ataqueNormal, controles.ataqueNormalAlternativo))
             {
-                if (jogador->energia >= energiaConsumida[0])
+                if (*energiaEquipe >= energiaConsumida[0])
                 {
                     ataqueSolicitado = ATAQUE_NORMAL;
                     registrarAtaquePendente(jogador, ataqueSolicitado);
@@ -175,7 +171,7 @@ TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls co
                 keyPressedAlternativo(controles.ataqueEspecial, controles.ataqueEspecialAlternativo))
             {
                 int custo = energiaConsumida[2];
-                if (jogador->energia >= custo)
+                if (*energiaEquipe >= custo)
                 {
                     ataqueSolicitado = ATAQUE_ESPECIAL;
                     registrarAtaquePendente(jogador, ataqueSolicitado);

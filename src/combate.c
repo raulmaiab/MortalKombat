@@ -60,7 +60,7 @@ static int calcularDanoPercentual(const Jogador *alvo, int percentual)
  * Processa um passinho atacante contra o alvo.
  * Verifica distância, energia e stun antes de aplicar dano.
  */
-void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, int tickAtual)
+void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, int *energiaAtacante, int tickAtual)
 {
     if (atacante->stunTicks > 0)
         return;
@@ -86,7 +86,7 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
         break;
     }
 
-    if (ataqueValido(passinho) && atacante->energia < custo)
+    if (ataqueValido(passinho) && *energiaAtacante < custo)
     {
         return;
     }
@@ -98,9 +98,9 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
 
     if (ataqueValido(passinho))
     {
-        atacante->energia -= custo;
-        if (atacante->energia < 0)
-            atacante->energia = 0;
+        *energiaAtacante -= custo;
+        if (*energiaAtacante < 0)
+            *energiaAtacante = 0;
     }
 
     if (!ataqueAgachado(passinho) && (alvo->agachado || alvo->ataqueAgachadoTicks > 0))
@@ -115,7 +115,7 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
 
     if (!ataqueAgachado(passinho) && alvo->defendendo && alvo->noChao && defesaDeFrente(alvo, atacante))
     {
-        adicionarEnergia(atacante, GANHO_ENERGIA_DEFESA);
+        adicionarEnergia(energiaAtacante, GANHO_ENERGIA_DEFESA);
         aplicarRecuperacaoAtaque(atacante, passinho);
         alvo->stunTicks = BLOCKSTUN_TICKS;
         alvo->ultimoGolpeTick = tickAtual;
@@ -126,7 +126,7 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
     if (alvo->hp < 0)
         alvo->hp = 0;
 
-    adicionarEnergia(atacante, GANHO_ENERGIA_ACERTO);
+    adicionarEnergia(energiaAtacante, GANHO_ENERGIA_ACERTO);
     aplicarRecuperacaoAtaque(atacante, passinho);
     alvo->stunTicks = STUN_TICKS_PADRAO;
     alvo->ultimoGolpeTick = tickAtual;
@@ -137,18 +137,18 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
  * Incrementa a barra de energia do jogador proporcional ao dano causado.
  * Limita a energia ao máximo (MAX_ENERGIA).
  */
-void atualizarEnergia(Jogador *jogador, int dano)
+void atualizarEnergia(int *energia, int dano)
 {
-    jogador->energia += dano / 2;
-    if (jogador->energia > MAX_ENERGIA)
-        jogador->energia = MAX_ENERGIA;
+    *energia += dano / 2;
+    if (*energia > MAX_ENERGIA)
+        *energia = MAX_ENERGIA;
 }
 
-void adicionarEnergia(Jogador *jogador, int quantidade)
+void adicionarEnergia(int *energia, int quantidade)
 {
-    jogador->energia += quantidade;
-    if (jogador->energia > MAX_ENERGIA)
-        jogador->energia = MAX_ENERGIA;
+    *energia += quantidade;
+    if (*energia > MAX_ENERGIA)
+        *energia = MAX_ENERGIA;
 }
 
 /*

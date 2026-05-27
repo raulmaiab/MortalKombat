@@ -161,12 +161,12 @@ static void desenharHUDJogador(const EquipeJogador *equipe, int x, int y, Color 
         const NoPersonagem *ativo = equipe->personagens.inicio;
         desenharBarraPersonagemEquipe(ativo, x, y + 64, 400, 28, cor, alinhadoDireita, 1);
         DrawRectangle(x + (alinhadoDireita ? 120 : 0), y + 112, 200, 15, DARKGRAY);
-        int energia = ativo->jogador.energia * 200 / MAX_ENERGIA;
+        int energia = equipe->energia * 200 / MAX_ENERGIA;
         if (alinhadoDireita)
             DrawRectangle(x + 120 + (200 - energia), y + 112, energia, 15, COR_ENERGIA);
         else
             DrawRectangle(x, y + 112, energia, 15, COR_ENERGIA);
-        DrawText(TextFormat("Energia: %d%%", ativo->jogador.energia),
+        DrawText(TextFormat("Energia: %d%%", equipe->energia),
                  x + (alinhadoDireita ? 120 : 0), y + 130, 16, WHITE);
     }
 }
@@ -180,14 +180,6 @@ void desenharHUD(const EquipeJogador *equipe1, const EquipeJogador *equipe2,
 
     desenharTextoCentralizadoComSombra(TextFormat("%s  x  %s", nomeJ1, nomeJ2),
                                        LARGURA_TELA / 2, margem, 22, WHITE);
-    if (equipe1->personagens.inicio == NULL || equipe2->personagens.inicio == NULL)
-        return;
-
-    DrawText(TextFormat("Stun: %d", equipe1->personagens.inicio->jogador.stunTicks),
-             margem, margem + 150, 16, equipe1->personagens.inicio->jogador.stunTicks > 0 ? ORANGE : LIGHTGRAY);
-    DrawText(TextFormat("Stun: %d", equipe2->personagens.inicio->jogador.stunTicks),
-             LARGURA_TELA - margem - 190, margem + 150, 16,
-             equipe2->personagens.inicio->jogador.stunTicks > 0 ? ORANGE : LIGHTGRAY);
 }
 
 /*

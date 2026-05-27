@@ -32,7 +32,7 @@ typedef struct
     int ataqueEspecialAlternativo;
 } PlayerControls;
 
-TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles);
+TipoPassinho updatePlayer(Jogador *jogador, Jogador *oponente, PlayerControls controles, int *energiaEquipe);
 TipoPassinho consumirAtaqueNoFrameDeImpacto(Jogador *jogador);
 void renderPlayer(const Jogador *jogador, const FighterAssets *assets, Color corBase, const char *rotulo);
 void resetPlayerPosition(Jogador *jogador, float posX, float posY, int olhandoDireita);

@@ -6,6 +6,7 @@
 typedef struct
 {
     FilaPersonagens personagens;
+    int energia;
     int roundsVencidos;
     int olhandoDireitaEntrada;
 } EquipeJogador;

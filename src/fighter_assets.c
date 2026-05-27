@@ -452,8 +452,6 @@ const FighterAnimation *getAnimationForState(const FighterAssets *assets, Player
         return &assets->attack;
     case SPECIAL_ATTACK:
         return &assets->special;
-    case STUN:
-        return &assets->stun;
     case KNOCKDOWN:
         return &assets->knockdown;
     case IDLE:
