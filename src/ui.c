@@ -4,13 +4,11 @@
 #include "raylib.h"
 #include "selecao_personagens.h"
 #include <stdio.h>
-#include <string.h>
 
 /* Cores temáticas */
 #define COR_HP_J1       BLUE
 #define COR_HP_J2       RED
 #define COR_ENERGIA     YELLOW
-#define COR_FUNDO_HUD   DARKGRAY
 
 Texture2D bgMarcoZero;
 Texture2D bgBoaViagem;

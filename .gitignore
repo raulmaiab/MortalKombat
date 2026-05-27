@@ -1,4 +1,7 @@
 *.exe
 *.o
 *.out
+batalha_passinho
+.DS_Store
+ranking.txt
 build/

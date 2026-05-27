@@ -71,6 +71,8 @@ static void atualizarEstado(Jogador *jogador, int moveu)
         novoEstado = KNOCKDOWN;
     else if (jogador->defendendo)
         novoEstado = DEFENSE;
+    else if (jogador->stunTicks > 0)
+        novoEstado = STUN;
     else if (jogador->agachado || jogador->ataqueAgachadoTicks > 0)
         novoEstado = CROUCH;
     else if (jogador->specialAttackTicks > 0)
@@ -109,6 +111,8 @@ static Color corDoEstado(const Jogador *jogador, Color corBase)
         return PURPLE;
     case JUMP:
         return SKYBLUE;
+    case STUN:
+        return ORANGE;
     case KNOCKDOWN:
         return GRAY;
     case WALK:

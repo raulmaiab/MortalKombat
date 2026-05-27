@@ -7,7 +7,6 @@ typedef struct
 {
     FilaPersonagens personagens;
     int energia;
-    int roundsVencidos;
     int olhandoDireitaEntrada;
 } EquipeJogador;
 
@@ -19,6 +18,5 @@ int equipeTemVivos(const EquipeJogador *equipe);
 int equipePodeTrocar(const EquipeJogador *equipe);
 void trocarParaProximoPersonagem(EquipeJogador *equipe);
 void trocarSeAtivoMorreu(EquipeJogador *equipe);
-void resetarEquipeParaNovoRound(EquipeJogador *equipe, float posX, float posY, int olhandoDireita);
 
 #endif

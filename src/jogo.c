@@ -153,7 +153,7 @@ static void desenharFiltroEspecial(const EquipeJogador *equipe1, const EquipeJog
         DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(RED, 0.24f));
 }
 
-static void processarAtaquesNoFrameDeImpacto(EquipeJogador *equipe1, EquipeJogador *equipe2, int tickAtual)
+static void processarAtaquesNoFrameDeImpacto(EquipeJogador *equipe1, EquipeJogador *equipe2)
 {
     Jogador *ativoJ1 = jogadorAtivo(equipe1);
     Jogador *ativoJ2 = jogadorAtivo(equipe2);
@@ -161,10 +161,10 @@ static void processarAtaquesNoFrameDeImpacto(EquipeJogador *equipe1, EquipeJogad
     TipoPassinho ataqueJ2 = consumirAtaqueNoFrameDeImpacto(ativoJ2);
 
     if (ataqueJ1 != PASSINHO_NENHUM)
-        processarPassinho(ataqueJ1, ativoJ1, ativoJ2, &equipe1->energia, tickAtual);
+        processarPassinho(ataqueJ1, ativoJ1, ativoJ2, &equipe1->energia);
 
     if (ataqueJ2 != PASSINHO_NENHUM)
-        processarPassinho(ataqueJ2, ativoJ2, ativoJ1, &equipe2->energia, tickAtual);
+        processarPassinho(ataqueJ2, ativoJ2, ativoJ1, &equipe2->energia);
 }
 
 static void finalizarPartida(int resultado, EquipeJogador *equipe1, EquipeJogador *equipe2,
@@ -304,7 +304,7 @@ int executarJogo(void)
 
                 updatePlayer(ativoJ1, ativoJ2, CONTROLES_J1, &equipe1.energia);
                 updatePlayer(ativoJ2, ativoJ1, CONTROLES_J2, &equipe2.energia);
-                processarAtaquesNoFrameDeImpacto(&equipe1, &equipe2, tickAtual);
+                processarAtaquesNoFrameDeImpacto(&equipe1, &equipe2);
             }
             trocarSeAtivoMorreu(&equipe1);
             trocarSeAtivoMorreu(&equipe2);

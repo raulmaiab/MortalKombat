@@ -49,11 +49,12 @@ static int pastaTemAssets(const char *pasta)
 {
     char caminho[180];
     const char *arquivos[] = {
-        "SpriteSheet.png", "portrait.png", "idle.png", "walk.png",
-        "attack.png", "stun.png", "MeuTrabalho.png", "Andando.png"
+        "SpriteSheet.png", "portrait.png", "Agachado.png",
+        "idle.png", "walk.png", "jump.png", "special.png",
+        "defense.png", "attack.png", "knockdown.png"
     };
 
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 10; i++)
     {
         snprintf(caminho, sizeof(caminho), "assets/fighters/%s/%s", pasta, arquivos[i]);
         if (FileExists(caminho))
@@ -139,6 +140,20 @@ static void carregarLinhaSpriteSheet(FighterAnimation *anim, Texture2D sheet, co
     }
 }
 
+static void carregarTrechoLinhaSpriteSheet(FighterAnimation *anim, Texture2D sheet, const Image *image,
+                                           int linha, int colunaInicial, int maxFrames, float frameDuration)
+{
+    anim->totalFrames = 0;
+    anim->frameDuration = frameDuration;
+
+    for (int coluna = colunaInicial; coluna < colunaInicial + maxFrames && coluna < MAX_ANIM_FRAMES; coluna++)
+    {
+        if (frameSpriteSheetVazio(image, coluna, linha))
+            break;
+        adicionarFrameSpriteSheet(anim, sheet, coluna, linha);
+    }
+}
+
 static int carregarLinhaSpriteSheetArquivo(FighterAnimation *anim, const char *path,
                                            int linha, float frameDuration)
 {
@@ -162,7 +177,7 @@ static int carregarSpriteSheetTeste(FighterAssets *assets, const char *pasta)
     char path[160];
     Image image;
     Texture2D sheet;
-    int isNeiff = strstr(pasta, "odiferenciado") != NULL;
+    int isAlirio = strstr(pasta, "alirio") != NULL;
 
     snprintf(path, sizeof(path), "assets/fighters/%s/SpriteSheet.png", pasta);
     if (!FileExists(path))
@@ -181,14 +196,14 @@ static int carregarSpriteSheetTeste(FighterAssets *assets, const char *pasta)
     carregarLinhaSpriteSheet(&assets->idle, sheet, &image, 0, 0.13f);
     carregarLinhaSpriteSheet(&assets->walk, sheet, &image, 1, 0.09f);
     carregarLinhaSpriteSheet(&assets->jump, sheet, &image, 2, 0.10f);
-    if (isNeiff)
+    if (isAlirio)
     {
-        carregarLinhaSpriteSheet(&assets->defense, sheet, &image, 3, 0.10f);
-        carregarLinhaSpriteSheet(&assets->attack, sheet, &image, 4, 0.08f);
+        carregarLinhaSpriteSheet(&assets->stun, sheet, &image, 3, 0.10f);
+        carregarTrechoLinhaSpriteSheet(&assets->attack, sheet, &image, 4, 0, 4, 0.08f);
+        carregarTrechoLinhaSpriteSheet(&assets->knockdown, sheet, &image, 4, 4, 3, 0.12f);
         carregarLinhaSpriteSheet(&assets->lowattack, sheet, &image, 5, 0.08f);
-        carregarLinhaSpriteSheet(&assets->stun, sheet, &image, 6, 0.10f);
-        carregarLinhaSpriteSheet(&assets->knockdown, sheet, &image, 6, 0.12f);
-        carregarLinhaSpriteSheet(&assets->special, sheet, &image, 7, 0.12f);
+        carregarLinhaSpriteSheet(&assets->special, sheet, &image, 6, 0.24f);
+        carregarLinhaSpriteSheet(&assets->defense, sheet, &image, 7, 0.10f);
     }
     else
     {
@@ -227,10 +242,7 @@ static void carregarFallbacksAtuais(FighterAssets *assets, const char *pasta)
 
     if (assets->walk.totalFrames == 0)
     {
-        snprintf(path, sizeof(path), "assets/fighters/%s/Andando.png", pasta);
-        carregarFrameSeExistir(&assets->walk, path);
-        snprintf(path, sizeof(path), "assets/fighters/%s/Andando (1).png", pasta);
-        carregarFrameSeExistir(&assets->walk, path);
+        carregarAnimacaoPadrao(&assets->walk, pasta, "walk", 0.10f);
     }
 
     if (assets->lowattack.totalFrames == 0)
@@ -239,44 +251,19 @@ static void carregarFallbacksAtuais(FighterAssets *assets, const char *pasta)
         carregarLinhaSpriteSheetArquivo(&assets->lowattack, path, 0, 0.08f);
     }
 
-    if (assets->lowattack.totalFrames == 0)
-    {
-        snprintf(path, sizeof(path), "assets/fighters/%s/Agachado_chute.png", pasta);
-        carregarFrameSeExistir(&assets->lowattack, path);
-    }
-
     if (assets->defense.totalFrames == 0)
     {
-        snprintf(path, sizeof(path), "assets/fighters/%s/Defesa.png", pasta);
-        carregarFrameSeExistir(&assets->defense, path);
-        snprintf(path, sizeof(path), "assets/fighters/%s/defense.png", pasta);
-        carregarFrameSeExistir(&assets->defense, path);
-        snprintf(path, sizeof(path), "assets/fighters/%s/Agachado.png", pasta);
-        carregarFrameSeExistir(&assets->defense, path);
-    }
-
-    if (assets->lowattack.totalFrames == 0 && assets->defense.totalFrames > 0)
-    {
-        assets->lowattack.frames[0] = assets->defense.frames[0];
-        assets->lowattack.sources[0] = assets->defense.sources[0];
-        assets->lowattack.totalFrames = 1;
-        assets->lowattack.frameDuration = 0.08f;
+        carregarAnimacaoPadrao(&assets->defense, pasta, "defense", 0.12f);
     }
 
     if (assets->jump.totalFrames == 0)
     {
-        snprintf(path, sizeof(path), "assets/fighters/%s/golpes_pulo.png", pasta);
-        carregarFrameSeExistir(&assets->jump, path);
-        snprintf(path, sizeof(path), "assets/fighters/%s/Agachado.png", pasta);
-        carregarFrameSeExistir(&assets->jump, path);
+        carregarAnimacaoPadrao(&assets->jump, pasta, "jump", 0.12f);
     }
 
     if (assets->attack.totalFrames == 0)
     {
-        snprintf(path, sizeof(path), "assets/fighters/%s/golpes_pulo.png", pasta);
-        carregarFrameSeExistir(&assets->attack, path);
-        snprintf(path, sizeof(path), "assets/fighters/%s/MeuTrabalho.png", pasta);
-        carregarFrameSeExistir(&assets->attack, path);
+        carregarAnimacaoPadrao(&assets->attack, pasta, "attack", 0.08f);
     }
 
     if (assets->special.totalFrames == 0 && assets->attack.totalFrames > 0)
@@ -289,14 +276,23 @@ static void carregarFallbacksAtuais(FighterAssets *assets, const char *pasta)
 
     if (assets->idle.totalFrames == 0)
     {
-        snprintf(path, sizeof(path), "assets/fighters/%s/idle.png", pasta);
-        carregarFrameSeExistir(&assets->idle, path);
-        snprintf(path, sizeof(path), "assets/fighters/%s/MeuTrabalho.png", pasta);
-        carregarFrameSeExistir(&assets->idle, path);
-        snprintf(path, sizeof(path), "assets/fighters/%s/Andando.png", pasta);
-        carregarFrameSeExistir(&assets->idle, path);
-        snprintf(path, sizeof(path), "assets/fighters/%s/Andando (1).png", pasta);
-        carregarFrameSeExistir(&assets->idle, path);
+        carregarAnimacaoPadrao(&assets->idle, pasta, "idle", 0.16f);
+    }
+
+    if (assets->knockdown.totalFrames == 0)
+    {
+        carregarAnimacaoPadrao(&assets->knockdown, pasta, "knockdown", 0.12f);
+    }
+
+    if (assets->lowattack.totalFrames == 0 && assets->knockdown.totalFrames > 0)
+    {
+        for (int i = 0; i < assets->knockdown.totalFrames && i < MAX_ANIM_FRAMES; i++)
+        {
+            assets->lowattack.frames[i] = assets->knockdown.frames[i];
+            assets->lowattack.sources[i] = assets->knockdown.sources[i];
+            assets->lowattack.totalFrames++;
+        }
+        assets->lowattack.frameDuration = 0.08f;
     }
 
     if (assets->stun.totalFrames == 0 && assets->defense.totalFrames > 0)
@@ -452,6 +448,8 @@ const FighterAnimation *getAnimationForState(const FighterAssets *assets, Player
         return &assets->attack;
     case SPECIAL_ATTACK:
         return &assets->special;
+    case STUN:
+        return &assets->stun;
     case KNOCKDOWN:
         return &assets->knockdown;
     case IDLE:

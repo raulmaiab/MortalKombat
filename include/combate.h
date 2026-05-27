@@ -25,10 +25,7 @@ typedef enum
 extern const int energiaConsumida[3];
 
 /* ---- Funções de Combate ---- */
-void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, int *energiaAtacante, int tickAtual);
-void atualizarEnergia(int *energia, int dano);
+void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, int *energiaAtacante);
 void adicionarEnergia(int *energia, int quantidade);
-int verificarVencedor(Jogador *jogador1, Jogador *jogador2);
-void encerrarRound(Jogador *vencedor);
 
 #endif

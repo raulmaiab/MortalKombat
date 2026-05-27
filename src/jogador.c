@@ -1,17 +1,15 @@
 #include "jogador.h"
-#include <string.h>
 
 /*
  * Retorna os atributos do personagem pelo índice.
- * Cada personagem tem HP, danos e velocidade únicos.
+ * Cada personagem tem HP e nome próprios.
  */
 Personagem getPersonagem(IndicePersonagem indice)
 {
     Personagem personagens[TOTAL_PERSONAGENS] = {
-        /* Nome              hpMax  dNormal dEsp  vel */
-        {"Anderson Neiff", 100, 9, 35, 6},
-        {"Alirio", 100, 8, 40, 8},
-        {"Ariano Suassuna", 100, 10, 32, 7},
+        {"Anderson Neiff", 100},
+        {"Alirio", 100},
+        {"Ariano Suassuna", 100},
     };
     return personagens[indice];
 }
@@ -25,9 +23,6 @@ void inicializarJogador(Jogador *jogador, IndicePersonagem indice, float posX, f
     jogador->personagem = getPersonagem(indice);
     jogador->hp = jogador->personagem.hpMaximo;
     jogador->stunTicks = 0;
-    jogador->ultimoGolpeTick = -20;
-    jogador->golpesSeguidos = 0;
-    jogador->roundsVencidos = 0;
     jogador->posX = posX;
     jogador->posY = posY;
     jogador->velY = 0.0f;
@@ -42,29 +37,5 @@ void inicializarJogador(Jogador *jogador, IndicePersonagem indice, float posX, f
     jogador->ataquePendenteAplicado = 0;
     jogador->stateTicks = 0;
     jogador->olhandoDireita = olhandoDireita;
-    jogador->state = IDLE;
-}
-
-/*
- * Reseta HP e energia para o próximo round.
- * Mantém personagem escolhido e rounds vencidos.
- */
-void resetarJogador(Jogador *jogador)
-{
-    jogador->hp = jogador->personagem.hpMaximo;
-    jogador->stunTicks = 0;
-    jogador->ultimoGolpeTick = -20;
-    jogador->golpesSeguidos = 0;
-    jogador->velY = 0.0f;
-    jogador->noChao = 1;
-    jogador->defendendo = 0;
-    jogador->agachado = 0;
-    jogador->ataqueAgachadoTicks = 0;
-    jogador->attackTicks = 0;
-    jogador->specialAttackTicks = 0;
-    jogador->ataquePendente = -1;
-    jogador->ataquePendenteTicks = 0;
-    jogador->ataquePendenteAplicado = 0;
-    jogador->stateTicks = 0;
     jogador->state = IDLE;
 }

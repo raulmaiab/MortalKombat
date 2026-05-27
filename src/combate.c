@@ -1,6 +1,5 @@
 #include "combate.h"
 #include <math.h>
-#include <string.h>
 
 const int energiaConsumida[3] = {0, 0, ENERGIA_ESPECIAL};
 
@@ -60,7 +59,7 @@ static int calcularDanoPercentual(const Jogador *alvo, int percentual)
  * Processa um passinho atacante contra o alvo.
  * Verifica distância, energia e stun antes de aplicar dano.
  */
-void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, int *energiaAtacante, int tickAtual)
+void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, int *energiaAtacante)
 {
     if (atacante->stunTicks > 0)
         return;
@@ -118,7 +117,6 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
         adicionarEnergia(energiaAtacante, GANHO_ENERGIA_DEFESA);
         aplicarRecuperacaoAtaque(atacante, passinho);
         alvo->stunTicks = BLOCKSTUN_TICKS;
-        alvo->ultimoGolpeTick = tickAtual;
         return;
     }
 
@@ -129,19 +127,6 @@ void processarPassinho(TipoPassinho passinho, Jogador *atacante, Jogador *alvo, 
     adicionarEnergia(energiaAtacante, GANHO_ENERGIA_ACERTO);
     aplicarRecuperacaoAtaque(atacante, passinho);
     alvo->stunTicks = STUN_TICKS_PADRAO;
-    alvo->ultimoGolpeTick = tickAtual;
-    alvo->golpesSeguidos = 0;
-}
-
-/*
- * Incrementa a barra de energia do jogador proporcional ao dano causado.
- * Limita a energia ao máximo (MAX_ENERGIA).
- */
-void atualizarEnergia(int *energia, int dano)
-{
-    *energia += dano / 2;
-    if (*energia > MAX_ENERGIA)
-        *energia = MAX_ENERGIA;
 }
 
 void adicionarEnergia(int *energia, int quantidade)
@@ -149,25 +134,4 @@ void adicionarEnergia(int *energia, int quantidade)
     *energia += quantidade;
     if (*energia > MAX_ENERGIA)
         *energia = MAX_ENERGIA;
-}
-
-/*
- * Verifica se algum jogador zerou o HP.
- * Retorna 1 se jogador1 venceu, 2 se jogador2 venceu, 0 se ainda em curso.
- */
-int verificarVencedor(Jogador *jogador1, Jogador *jogador2)
-{
-    if (jogador2->hp <= 0)
-        return 1;
-    if (jogador1->hp <= 0)
-        return 2;
-    return 0;
-}
-
-/*
- * Encerra o round: incrementa rounds vencidos.
- */
-void encerrarRound(Jogador *vencedor)
-{
-    vencedor->roundsVencidos++;
 }
