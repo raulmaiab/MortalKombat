@@ -333,6 +333,8 @@ static void carregarAssetsPersonagem(IndicePersonagem indice, int jogador)
     const char *pastaBase = pastaDisponivel(indice);
     const char *pasta = pastaJogador(pastaBase, jogador);
 
+    assets->escalaRender = indice == ALIRIO ? 0.88f : 1.0f;
+
     if (!carregarSpriteSheetTeste(assets, pasta))
     {
         carregarAnimacaoPadrao(&assets->idle, pasta, "idle", 0.16f);

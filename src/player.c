@@ -245,7 +245,7 @@ static float alturaRenderEstado(PlayerState state)
     return SPRITE_ALTURA_PADRAO;
 }
 
-static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *anim)
+static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *anim, float escalaRender)
 {
     int frameAtual;
     int ticksPorFrame;
@@ -274,7 +274,7 @@ static void renderSpriteAnimado(const Jogador *jogador, const FighterAnimation *
 
     textura = anim->frames[frameAtual];
     origem = anim->sources[frameAtual];
-    alturaSprite = alturaRenderEstado(jogador->state);
+    alturaSprite = alturaRenderEstado(jogador->state) * escalaRender;
     larguraSprite = alturaSprite * (origem.width / origem.height);
     destino = (Rectangle){
         jogador->posX + (LARGURA_PERSONAGEM / 2.0f) - (larguraSprite / 2.0f),
@@ -299,7 +299,7 @@ void renderPlayer(const Jogador *jogador, const FighterAssets *assets, Color cor
     const FighterAnimation *anim = getAnimationForState(assets, jogador->state);
 
     if (anim != NULL && anim->totalFrames > 0)
-        renderSpriteAnimado(jogador, anim);
+        renderSpriteAnimado(jogador, anim, assets->escalaRender);
     else
         DrawRectangle(x, y, LARGURA_PERSONAGEM, ALTURA_PERSONAGEM, cor);
 
