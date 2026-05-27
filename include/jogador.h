@@ -53,9 +53,9 @@ typedef struct
 /* Índices para seleção no menu */
 typedef enum
 {
-    ANDERSON_NEIFF,
+    O_DIFERENCIADO,
     ALIRIO,
-    ARIANO,
+    ADRIANO,
     TOTAL_PERSONAGENS
 } IndicePersonagem;
 

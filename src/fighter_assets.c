@@ -7,7 +7,7 @@ static FighterAssets lutadores[TOTAL_PERSONAGENS][2];
 static const char *pastasPersonagens[TOTAL_PERSONAGENS] = {
     "odiferenciado",
     "alirio",
-    "ariano",
+    "adriano",
 };
 
 static const char *pastaDisponivel(IndicePersonagem indice)
@@ -18,7 +18,7 @@ static const char *pastaDisponivel(IndicePersonagem indice)
     if (DirectoryExists(caminho))
         return pastasPersonagens[indice];
 
-    return indice == ARIANO ? "ariano" : "leigo";
+    return indice == ADRIANO ? "ADRIANO" : "leigo";
 }
 
 static void carregarFrameSeExistir(FighterAnimation *anim, const char *path)
@@ -32,8 +32,7 @@ static void carregarFrameSeExistir(FighterAnimation *anim, const char *path)
         0,
         0,
         (float)anim->frames[anim->totalFrames].width,
-        (float)anim->frames[anim->totalFrames].height
-    };
+        (float)anim->frames[anim->totalFrames].height};
     anim->totalFrames++;
 }
 
@@ -51,8 +50,7 @@ static int pastaTemAssets(const char *pasta)
     const char *arquivos[] = {
         "SpriteSheet.png", "portrait.png", "Agachado.png",
         "idle.png", "walk.png", "jump.png", "special.png",
-        "defense.png", "attack.png", "knockdown.png"
-    };
+        "defense.png", "attack.png", "knockdown.png"};
 
     for (int i = 0; i < 10; i++)
     {
@@ -88,8 +86,7 @@ static void adicionarFrameSpriteSheet(FighterAnimation *anim, Texture2D sheet, i
         (float)(coluna * 256),
         (float)(linha * 256),
         256.0f,
-        256.0f
-    };
+        256.0f};
     anim->totalFrames++;
 }
 
@@ -319,7 +316,7 @@ static Texture2D carregarPortrait(const char *pasta)
     snprintf(path, sizeof(path), "assets/fighters/%s/portrait.png", pasta);
     if (FileExists(path))
         return LoadTexture(path);
-        
+
     return (Texture2D){0};
 }
 
@@ -370,8 +367,7 @@ void descarregarAssetsLutadores(void)
             FighterAnimation *animacoes[] = {
                 &assets->idle, &assets->walk, &assets->jump,
                 &assets->lowattack, &assets->special, &assets->defense, &assets->attack,
-                &assets->stun, &assets->knockdown
-            };
+                &assets->stun, &assets->knockdown};
 
             for (int a = 0; a < 9; a++)
             {

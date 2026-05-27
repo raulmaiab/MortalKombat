@@ -18,6 +18,7 @@ typedef enum
     ESTADO_NOMES,
     ESTADO_SELECAO,
     ESTADO_COMBATE,
+    ESTADO_PAUSA,
     ESTADO_FIM_ROUND,
     ESTADO_VITORIA
 } EstadoJogo;
@@ -37,22 +38,96 @@ typedef enum
 #define MAX_NOME_JOGADOR 32
 #define MAX_RANKING 10
 #define ARQUIVO_RANKING "ranking.txt"
+#define BOTAO_PAUSA_LARGURA 96
+#define BOTAO_PAUSA_ALTURA 34
+#define AUDIO_FUNDO "assets/audio/fundo.ogg"
+#define AUDIO_VITORIA "assets/audio/vitoria.wav"
+#define AUDIO_ESPECIAL "assets/audio/especial.wav"
+
+typedef struct
+{
+    Music fundo;
+    Sound vitoria;
+    Sound especial;
+    int temFundo;
+    int temVitoria;
+    int temEspecial;
+} AudioJogo;
 
 static const PlayerControls CONTROLES_J1 = {
     KEY_A, KEY_D, KEY_W,
     KEY_F, KEY_E,
     KEY_S,
     KEY_G, 0,
-    KEY_LEFT_SHIFT, 0
-};
+    KEY_LEFT_SHIFT, 0};
 
 static const PlayerControls CONTROLES_J2 = {
     KEY_LEFT, KEY_RIGHT, KEY_UP,
     KEY_RIGHT_SHIFT, KEY_INSERT,
     KEY_DOWN,
     KEY_J, KEY_KP_1,
-    KEY_ENTER, KEY_KP_ENTER
-};
+    KEY_ENTER, KEY_KP_ENTER};
+
+static void desenharFiltroEspecial(const EquipeJogador *equipe1, const EquipeJogador *equipe2);
+
+static void carregarAudioJogo(AudioJogo *audio)
+{
+    audio->temFundo = 0;
+    audio->temVitoria = 0;
+    audio->temEspecial = 0;
+
+    InitAudioDevice();
+
+    if (FileExists(AUDIO_FUNDO))
+    {
+        audio->fundo = LoadMusicStream(AUDIO_FUNDO);
+        audio->fundo.looping = 1;
+        audio->temFundo = 1;
+        PlayMusicStream(audio->fundo);
+    }
+
+    if (FileExists(AUDIO_VITORIA))
+    {
+        audio->vitoria = LoadSound(AUDIO_VITORIA);
+        audio->temVitoria = 1;
+    }
+
+    if (FileExists(AUDIO_ESPECIAL))
+    {
+        audio->especial = LoadSound(AUDIO_ESPECIAL);
+        audio->temEspecial = 1;
+    }
+}
+
+static void atualizarAudioJogo(AudioJogo *audio)
+{
+    if (audio->temFundo)
+        UpdateMusicStream(audio->fundo);
+}
+
+static void descarregarAudioJogo(AudioJogo *audio)
+{
+    if (audio->temFundo)
+        UnloadMusicStream(audio->fundo);
+    if (audio->temVitoria)
+        UnloadSound(audio->vitoria);
+    if (audio->temEspecial)
+        UnloadSound(audio->especial);
+
+    CloseAudioDevice();
+}
+
+static void tocarSomEspecial(const AudioJogo *audio)
+{
+    if (audio->temEspecial)
+        PlaySound(audio->especial);
+}
+
+static void tocarSomVitoria(const AudioJogo *audio)
+{
+    if (audio->temVitoria)
+        PlaySound(audio->vitoria);
+}
 
 static void iniciarPartida(EquipeJogador *equipe1, EquipeJogador *equipe2,
                            const int selecoesJ1[], const int selecoesJ2[])
@@ -64,7 +139,7 @@ static void iniciarPartida(EquipeJogador *equipe1, EquipeJogador *equipe2,
 static void reiniciarSelecoes(SelecaoPersonagens *selecaoJ1, SelecaoPersonagens *selecaoJ2)
 {
     inicializarSelecaoPersonagens(selecaoJ1, ALIRIO);
-    inicializarSelecaoPersonagens(selecaoJ2, ARIANO);
+    inicializarSelecaoPersonagens(selecaoJ2, ADRIANO);
 }
 
 static void preencherNomePadrao(char *nome, int jogador)
@@ -132,6 +207,71 @@ static Texture2D selecionarCenario(IndiceCenario cenarioAtual)
     }
 }
 
+static Rectangle retanguloBotaoPausa(void)
+{
+    return (Rectangle){LARGURA_TELA / 2.0f - BOTAO_PAUSA_LARGURA / 2.0f, 58.0f,
+                       BOTAO_PAUSA_LARGURA, BOTAO_PAUSA_ALTURA};
+}
+
+static Rectangle retanguloBotaoContinuar(void)
+{
+    return (Rectangle){LARGURA_TELA / 2.0f - 145.0f, 310.0f, 290.0f, 48.0f};
+}
+
+static Rectangle retanguloBotaoMenu(void)
+{
+    return (Rectangle){LARGURA_TELA / 2.0f - 145.0f, 378.0f, 290.0f, 48.0f};
+}
+
+static int botaoClicado(Rectangle botao)
+{
+    return IsMouseButtonPressed(MOUSE_BUTTON_LEFT) &&
+           CheckCollisionPointRec(GetMousePosition(), botao);
+}
+
+static void desenharBotaoTexto(Rectangle botao, const char *texto, Color fundo, Color borda, int tamanhoFonte)
+{
+    int larguraTexto = MeasureText(texto, tamanhoFonte);
+
+    DrawRectangleRounded(botao, 0.12f, 8, fundo);
+    DrawRectangleRoundedLines(botao, 0.12f, 8, borda);
+    DrawText(texto,
+             (int)(botao.x + botao.width / 2.0f - larguraTexto / 2.0f),
+             (int)(botao.y + botao.height / 2.0f - tamanhoFonte / 2.0f),
+             tamanhoFonte, WHITE);
+}
+
+static void desenharBotaoPausa(void)
+{
+    desenharBotaoTexto(retanguloBotaoPausa(), "PAUSA", Fade(BLACK, 0.65f), Fade(WHITE, 0.75f), 18);
+}
+
+static void desenharModalPausa(void)
+{
+    Rectangle painel = {LARGURA_TELA / 2.0f - 190.0f, 220.0f, 380.0f, 260.0f};
+    int larguraTitulo = MeasureText("JOGO PAUSADO", 30);
+
+    DrawRectangle(0, 0, LARGURA_TELA, ALTURA_TELA, Fade(BLACK, 0.58f));
+    DrawRectangleRounded(painel, 0.05f, 10, Fade((Color){8, 8, 12, 255}, 0.96f));
+    DrawRectangleRoundedLines(painel, 0.05f, 10, Fade(WHITE, 0.65f));
+    DrawText("JOGO PAUSADO", LARGURA_TELA / 2 - larguraTitulo / 2, 250, 30, WHITE);
+    desenharBotaoTexto(retanguloBotaoContinuar(), "Continuar", Fade(GREEN, 0.45f), Fade(GREEN, 0.9f), 22);
+    desenharBotaoTexto(retanguloBotaoMenu(), "Voltar ao Menu", Fade(RED, 0.45f), Fade(RED, 0.9f), 22);
+}
+
+static void desenharCombateAtual(IndiceCenario cenarioAtual, EquipeJogador *equipe1, EquipeJogador *equipe2,
+                                 const char *nomeJ1, const char *nomeJ2)
+{
+    desenharCenario(selecionarCenario(cenarioAtual));
+    if (jogadorAtivo(equipe1) != NULL)
+        renderPlayer(jogadorAtivo(equipe1), getFighterAssetsJogador(indiceAtivoEquipe(equipe1), 1), BLUE, "J1");
+    if (jogadorAtivo(equipe2) != NULL)
+        renderPlayer(jogadorAtivo(equipe2), getFighterAssetsJogador(indiceAtivoEquipe(equipe2), 2), RED, "J2");
+    desenharHUD(equipe1, equipe2, nomeJ1, nomeJ2);
+    desenharFiltroEspecial(equipe1, equipe2);
+    desenharBotaoPausa();
+}
+
 static int verificarVencedorEquipes(EquipeJogador *equipe1, EquipeJogador *equipe2)
 {
     if (!equipeTemVivos(equipe2))
@@ -191,6 +331,8 @@ int executarJogo(void)
     InitWindow(LARGURA_TELA, ALTURA_TELA, TITULO_JANELA);
     SetTargetFPS(FPS_ALVO);
 
+    AudioJogo audio;
+    carregarAudioJogo(&audio);
     carregarCenarios();
     carregarAssetsLutadores();
 
@@ -220,7 +362,8 @@ int executarJogo(void)
 
     while (!WindowShouldClose())
     {
-        tickAtual++;
+        if (estado != ESTADO_PAUSA)
+            tickAtual++;
 
         switch (estado)
         {
@@ -287,6 +430,12 @@ int executarJogo(void)
             break;
 
         case ESTADO_COMBATE:
+            if (botaoClicado(retanguloBotaoPausa()))
+            {
+                estado = ESTADO_PAUSA;
+                break;
+            }
+
             if (tickAtual % TICK_GANHO_ENERGIA == 0)
             {
                 adicionarEnergia(&equipe1.energia, GANHO_ENERGIA_TEMPO);
@@ -301,9 +450,11 @@ int executarJogo(void)
             {
                 Jogador *ativoJ1 = jogadorAtivo(&equipe1);
                 Jogador *ativoJ2 = jogadorAtivo(&equipe2);
+                TipoPassinho ataqueSolicitadoJ1 = updatePlayer(ativoJ1, ativoJ2, CONTROLES_J1, &equipe1.energia);
+                TipoPassinho ataqueSolicitadoJ2 = updatePlayer(ativoJ2, ativoJ1, CONTROLES_J2, &equipe2.energia);
 
-                updatePlayer(ativoJ1, ativoJ2, CONTROLES_J1, &equipe1.energia);
-                updatePlayer(ativoJ2, ativoJ1, CONTROLES_J2, &equipe2.energia);
+                if (ataqueSolicitadoJ1 == ATAQUE_ESPECIAL || ataqueSolicitadoJ2 == ATAQUE_ESPECIAL)
+                    tocarSomEspecial(&audio);
                 processarAtaquesNoFrameDeImpacto(&equipe1, &equipe2);
             }
             trocarSeAtivoMorreu(&equipe1);
@@ -314,12 +465,20 @@ int executarJogo(void)
 
                 if (resultado != 0)
                 {
+                    tocarSomVitoria(&audio);
                     finalizarPartida(resultado, &equipe1, &equipe2, &vencedorRound,
                                      ranking, &totalRanking, nomeJ1, nomeJ2);
                     ticksFimRound = KNOCKDOWN_DISPLAY_TICKS;
                     estado = ESTADO_FIM_ROUND;
                 }
             }
+            break;
+
+        case ESTADO_PAUSA:
+            if (botaoClicado(retanguloBotaoContinuar()))
+                estado = ESTADO_COMBATE;
+            else if (botaoClicado(retanguloBotaoMenu()))
+                estado = ESTADO_MENU;
             break;
 
         case ESTADO_FIM_ROUND:
@@ -385,6 +544,7 @@ int executarJogo(void)
             break;
         }
 
+        atualizarAudioJogo(&audio);
         BeginDrawing();
         ClearBackground(BLACK);
 
@@ -403,13 +563,11 @@ int executarJogo(void)
             break;
         case ESTADO_COMBATE:
         case ESTADO_FIM_ROUND:
-            desenharCenario(selecionarCenario(cenarioAtual));
-            if (jogadorAtivo(&equipe1) != NULL)
-                renderPlayer(jogadorAtivo(&equipe1), getFighterAssetsJogador(indiceAtivoEquipe(&equipe1), 1), BLUE, "J1");
-            if (jogadorAtivo(&equipe2) != NULL)
-                renderPlayer(jogadorAtivo(&equipe2), getFighterAssetsJogador(indiceAtivoEquipe(&equipe2), 2), RED, "J2");
-            desenharHUD(&equipe1, &equipe2, nomeJ1, nomeJ2);
-            desenharFiltroEspecial(&equipe1, &equipe2);
+            desenharCombateAtual(cenarioAtual, &equipe1, &equipe2, nomeJ1, nomeJ2);
+            break;
+        case ESTADO_PAUSA:
+            desenharCombateAtual(cenarioAtual, &equipe1, &equipe2, nomeJ1, nomeJ2);
+            desenharModalPausa();
             break;
         case ESTADO_VITORIA:
             desenharTelaVitoria(vencedorRound, nomeJ1, nomeJ2,
@@ -424,6 +582,7 @@ int executarJogo(void)
 
     descarregarAssetsLutadores();
     descarregarCenarios();
+    descarregarAudioJogo(&audio);
     CloseWindow();
     return 0;
 }

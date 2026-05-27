@@ -7,9 +7,9 @@
 Personagem getPersonagem(IndicePersonagem indice)
 {
     Personagem personagens[TOTAL_PERSONAGENS] = {
-        {"Anderson Neiff", 100},
+        {"Diferenciado", 100},
         {"Alirio", 100},
-        {"Ariano Suassuna", 100},
+        {"Adriano", 100},
     };
     return personagens[indice];
 }
